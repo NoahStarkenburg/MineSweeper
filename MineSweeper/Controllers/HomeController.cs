@@ -15,6 +15,7 @@ namespace MineSweeper.Controllers
 
         public IActionResult Index()
         {
+            Console.WriteLine("Hello World");
             return View();
         }
 
