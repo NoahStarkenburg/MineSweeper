@@ -8,7 +8,7 @@ namespace MineSweeper.Controllers
 {
     public class UserController : Controller
     {
-        private readonly UserDAO users;
+        private IUserManager users;
         UserModel newUser;
 
         public IActionResult Index()
@@ -16,7 +16,7 @@ namespace MineSweeper.Controllers
             return View();
         }
 
-        public UserController(UserDAO userManager) 
+        public UserController(IUserManager userManager) 
         {
             users = userManager;
         }
@@ -34,7 +34,7 @@ namespace MineSweeper.Controllers
             {
                 newUser = users.getUserByName(username);
                 string userJson = ServiceStack.Text.JsonSerializer.SerializeToString(newUser);
-                // HttpContext.Session.SetString("User", userJson);
+                HttpContext.Session.SetString("User", userJson);
                 return View("LoginSuccess", newUser);
             }
             else

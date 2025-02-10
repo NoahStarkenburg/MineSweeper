@@ -11,16 +11,16 @@ namespace MineSweeper
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            builder.Services.AddSingleton<UserDAO>();
+            builder.Services.AddSingleton<IUserManager, UserDAO>();
 
-            builder.Services.AddDistributedMemoryCache();
+            
             builder.Services.AddSession(options =>
             {
                 options.IdleTimeout = TimeSpan.FromSeconds(30);
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
             });
-
+            builder.Services.AddDistributedMemoryCache();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -31,6 +31,7 @@ namespace MineSweeper
                 app.UseHsts();
             }
 
+            app.UseSession();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
