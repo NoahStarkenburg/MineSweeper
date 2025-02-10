@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using MineSweeper.Models;
 using RegisterAndLoginAPP.Filters;
 using RegisterAndLoginAPP.Models;
@@ -7,32 +8,41 @@ namespace MineSweeper.Controllers
 {
     public class UserController : Controller
     {
-        UserDAO users = new UserDAO();
+        private readonly UserDAO users;
         UserModel newUser;
+
+        public IActionResult Index()
+        {
+            return View();
+        }
 
         public UserController(UserDAO userManager) 
         {
             users = userManager;
         }
 
-        public IActionResult ProccessLogin(LoginViewModel loginViewModel)
+        public IActionResult ProccessLogin(string username, string password)
         {
-            UserModel userData = new UserModel();
-
-            if (users.CheckCredentials(loginViewModel.Username, loginViewModel.Password) != 0)
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
-                newUser = users.getUserByName(loginViewModel.Username);
+                return View("LoginFailure", new UserModel { Username = username });
+            }
 
-                // Save the user data in the session
-                string userJson = ServiceStack.Text.JsonSerializer.SerializeToString(userData);
-                HttpContext.Session.SetString("User", userJson);
+            int userId = users.CheckCredentials(username, password);
+
+            if (userId != 0)
+            {
+                newUser = users.getUserByName(username);
+                string userJson = ServiceStack.Text.JsonSerializer.SerializeToString(newUser);
+                // HttpContext.Session.SetString("User", userJson);
                 return View("LoginSuccess", newUser);
             }
             else
             {
-                return View("LoginFailure", userData);
+                return View("LoginFailure", new UserModel { Username = username });
             }
         }
+
 
         public IActionResult Register()
         {
@@ -41,23 +51,22 @@ namespace MineSweeper.Controllers
 
         public IActionResult ProcessRegister(RegisterViewModel registerViewModel)
         {
-            UserModel user = new UserModel();
-            user.FirstName = registerViewModel.FirstName;
-            user.LastName = registerViewModel.LastName;
-            user.Sex = registerViewModel.Sex;
-            user.DateOfBirth = registerViewModel.DateOfBirth;
-            user.State = registerViewModel.State;
-            user.Username = registerViewModel.Username;
+            UserModel user = new UserModel
+            {
+                FirstName = registerViewModel.FirstName,
+                LastName = registerViewModel.LastName,
+                Sex = registerViewModel.Sex,
+                DateOfBirth = registerViewModel.DateOfBirth,
+                Email = registerViewModel.Email,
+                State = registerViewModel.State,
+                Username = registerViewModel.Username
+            };
             user.SetPassword(registerViewModel.Password);
             users.AddUser(user);
 
             return View("Index");
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
 
         [SessionCheckFilter]
         public IActionResult Logout()

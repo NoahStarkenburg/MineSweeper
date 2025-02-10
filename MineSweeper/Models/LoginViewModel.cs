@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace RegisterAndLoginAPP.Models
+namespace MineSweeper.Models
 {
     public class LoginViewModel
     {

@@ -1,3 +1,5 @@
+using MineSweeper.Models;
+
 namespace MineSweeper
 {
     public class Program
@@ -8,6 +10,16 @@ namespace MineSweeper
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            builder.Services.AddSingleton<UserDAO>();
+
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromSeconds(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
 
             var app = builder.Build();
 

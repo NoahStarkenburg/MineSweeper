@@ -1,29 +1,28 @@
-﻿
-using Microsoft.Data.SqlClient;
+﻿using MySql.Data.MySqlClient;
+using System.Data;
 
 namespace MineSweeper.Models
 {
     public class UserDAO : IUserManager
     {
-        string connectionString = "mysql:host=localhost;port:3306;dbname=minesweeper;user=root;password=root;";
+        string connectionString = "server=localhost;port=8889;user=root;password=root;database=minesweeper;";
 
         public int AddUser(UserModel user)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
-                string query = @"
-                INSERT INTO users (FirstName, LastName, Sex, DateOfBirth, State, Username, Password, Salt)
-                VALUES (@FirstName, @LastName, @Sex, @DateOfBirth, @State, @Username, @PasswordHash, @Salt);
-                SELECT SCOPE_IDENTITY();";
+                string query = @"INSERT INTO `users`(`FirstName`, `LastName`, `Sex`, `DateOfBirth`, `State`, `Email`, `Username`, `Password`, `Salt`) 
+                 VALUES (@FirstName, @LastName, @Sex, @DateOfBirth, @State, @Email, @Username, @PasswordHash, @Salt)";
 
-                using (SqlCommand command = new SqlCommand(query, connection))
+                using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@FirstName", user.FirstName);
                     command.Parameters.AddWithValue("@LastName", user.LastName);
                     command.Parameters.AddWithValue("@Sex", user.Sex);
-                    command.Parameters.AddWithValue("@DateOfBirth", user.DateOfBirth);
+                    command.Parameters.AddWithValue("@DateOfBirth", user.DateOfBirth.Date);
                     command.Parameters.AddWithValue("@State", user.State);
+                    command.Parameters.AddWithValue("@Email", user.Email);
                     command.Parameters.AddWithValue("@Username", user.Username);
                     command.Parameters.AddWithValue("@PasswordHash", user.PasswordHash);
                     command.Parameters.AddWithValue("@Salt", user.Salt);
@@ -36,43 +35,39 @@ namespace MineSweeper.Models
 
         public int CheckCredentials(string username, string password)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
                 string query = "SELECT * FROM users WHERE Username = @Username";
-                SqlCommand command = new SqlCommand(query, connection);
+                MySqlCommand command = new MySqlCommand(query, connection);
                 command.Parameters.AddWithValue("@Username", username);
-                SqlDataReader reader = command.ExecuteReader();
+                MySqlDataReader reader = command.ExecuteReader();
 
                 if (reader.Read())
                 {
                     UserModel user = new UserModel
                     {
                         Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                        FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                        LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                        Sex = reader.GetChar(reader.GetOrdinal("Sex")),
-                        DateOfBirth = reader.GetDateTime(reader.GetOrdinal("DateOfBirth")),
-                        State = reader.GetString(reader.GetOrdinal("State")),
-                        Username = reader.GetString(reader.GetOrdinal("Username")),
-                        PasswordHash = reader.GetString(reader.GetOrdinal("PasswordHash")),
+                        PasswordHash = reader.GetString(reader.GetOrdinal("Password")),
                         Salt = reader.GetString(reader.GetOrdinal("Salt"))
                     };
 
+                    // Verify the password
                     if (user.VerifyPassword(password))
                         return user.Id;
                 }
-                return 0;
             }
+            return 0;
         }
+
 
         public void DeleteUser(UserModel user)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
                 string query = "DELETE FROM users where Id = @Id";
-                SqlCommand command = new SqlCommand(query, connection);
+                MySqlCommand command = new MySqlCommand(query, connection);
                 command.Parameters.AddWithValue("@Id", user.Id);
                 command.ExecuteNonQuery();
             }
@@ -81,12 +76,12 @@ namespace MineSweeper.Models
         public List<UserModel> GetAllUsers()
         {
             List<UserModel> users = new List<UserModel>();
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
                 string query = "SELECT * FROM users";
-                SqlCommand command = new SqlCommand(query, connection);
-                SqlDataReader reader = command.ExecuteReader();
+                MySqlCommand command = new MySqlCommand(query, connection);
+                MySqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())
                 {
                     UserModel user = new UserModel
@@ -94,9 +89,10 @@ namespace MineSweeper.Models
                         Id = reader.GetInt32(reader.GetOrdinal("Id")),
                         FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                         LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                        Sex = reader.GetChar(reader.GetOrdinal("Sex")),
+                        Sex = reader.GetString(reader.GetOrdinal("Sex")),
                         DateOfBirth = reader.GetDateTime(reader.GetOrdinal("DateOfBirth")),
                         State = reader.GetString(reader.GetOrdinal("State")),
+                        Email = reader.GetString(reader.GetOrdinal("Email")),
                         Username = reader.GetString(reader.GetOrdinal("Username")),
                         PasswordHash = reader.GetString(reader.GetOrdinal("PasswordHash")),
                         Salt = reader.GetString(reader.GetOrdinal("Salt"))
@@ -109,13 +105,13 @@ namespace MineSweeper.Models
 
         public UserModel getUserById(int id)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
                 string query = "SELECT * FROM users WHERE Id = @Id";
-                SqlCommand command = new SqlCommand(query, connection);
+                MySqlCommand command = new MySqlCommand(query, connection);
                 command.Parameters.AddWithValue("@Id", id);
-                SqlDataReader reader = command.ExecuteReader();
+                MySqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())
                 {
                     UserModel user = new UserModel
@@ -123,9 +119,10 @@ namespace MineSweeper.Models
                         Id = reader.GetInt32(reader.GetOrdinal("Id")),
                         FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                         LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                        Sex = reader.GetChar(reader.GetOrdinal("Sex")),
+                        Sex = reader.GetString(reader.GetOrdinal("Sex")),
                         DateOfBirth = reader.GetDateTime(reader.GetOrdinal("DateOfBirth")),
                         State = reader.GetString(reader.GetOrdinal("State")),
+                        Email = reader.GetString(reader.GetOrdinal("Email")),
                         Username = reader.GetString(reader.GetOrdinal("Username")),
                         PasswordHash = reader.GetString(reader.GetOrdinal("PasswordHash")),
                         Salt = reader.GetString(reader.GetOrdinal("Salt"))
@@ -138,13 +135,13 @@ namespace MineSweeper.Models
 
         public UserModel getUserByName(string username)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 connection.Open();
                 string query = "SELECT * FROM users WHERE Username = @Username";
-                SqlCommand command = new SqlCommand(query, connection);
+                MySqlCommand command = new MySqlCommand(query, connection);
                 command.Parameters.AddWithValue("@Username", username);
-                SqlDataReader reader = command.ExecuteReader();
+                MySqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())
                 {
                     UserModel user = new UserModel
@@ -152,11 +149,12 @@ namespace MineSweeper.Models
                         Id = reader.GetInt32(reader.GetOrdinal("Id")),
                         FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                         LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                        Sex = reader.GetChar(reader.GetOrdinal("Sex")),
+                        Sex = reader.GetString(reader.GetOrdinal("Sex")),
                         DateOfBirth = reader.GetDateTime(reader.GetOrdinal("DateOfBirth")),
                         State = reader.GetString(reader.GetOrdinal("State")),
+                        Email = reader.GetString(reader.GetOrdinal("Email")),
                         Username = reader.GetString(reader.GetOrdinal("Username")),
-                        PasswordHash = reader.GetString(reader.GetOrdinal("PasswordHash")),
+                        PasswordHash = reader.GetString(reader.GetOrdinal("Password")),
                         Salt = reader.GetString(reader.GetOrdinal("Salt"))
                     };
                     return user;
@@ -169,20 +167,21 @@ namespace MineSweeper.Models
         {
             if (user != null)
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (MySqlConnection connection = new MySqlConnection(connectionString))
                 {
                     connection.Open();
                     string query = @"
                     UPDATE users 
-                    SET FirstName = @FirstName, Lastname = @LastName, Sex = @Sex, DateOfBirth = @DateOfBirth, State = @State, Username = @Username, Password = @PasswordHash, Salt = @Salt
+                    SET FirstName = @FirstName, Lastname = @LastName, Sex = @Sex, DateOfBirth = @DateOfBirth, State = @State, Email = @Email, Username = @Username, Password = @PasswordHash, Salt = @Salt
                     WHERE Id = @Id";
 
-                    SqlCommand command = new SqlCommand(query, connection);
+                    MySqlCommand command = new MySqlCommand(query, connection);
                     command.Parameters.AddWithValue("@FirstName", user.FirstName);
                     command.Parameters.AddWithValue("@LastName", user.LastName);
                     command.Parameters.AddWithValue("@Sex", user.Sex);
-                    command.Parameters.AddWithValue("@DateOfBirth", user.DateOfBirth);
+                    command.Parameters.AddWithValue("@DateOfBirth", user.DateOfBirth.Date);
                     command.Parameters.AddWithValue("@State", user.State);
+                    command.Parameters.AddWithValue("@Email", user.Email);
                     command.Parameters.AddWithValue("@Username", user.Username);
                     command.Parameters.AddWithValue("@PasswordHash", user.PasswordHash);
                     command.Parameters.AddWithValue("@Salt", user.Salt);
