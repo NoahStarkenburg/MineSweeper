@@ -5,7 +5,7 @@ namespace MineSweeper.Models
 {
     public class UserDAO : IUserManager
     {
-        //Connection string
+        //Connection strings
         string connectionString = "server=localhost;port=3306;user=root;password=root;database=minesweeper;";
         //string connectionString = "server=localhost;port=8889;user=root;password=root;database=minesweeper;";
 
