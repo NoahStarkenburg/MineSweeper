@@ -2,5 +2,17 @@
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
-    <p>Start Game Page For logged in Users</p>
+    <h2>Start a New Minesweeper Game</h2>
+
+    <form asp-action="StartGame" method="post">
+        <label for="rows">Rows: <span id="rowValue">5 </span></label>
+        <input type="range" id="rows" name="rows" min="3" max="10" value="5" oninput="rowValue.innerText = rows.value">
+        <br />
+
+        <label for="columns">Columns: <span id="columnValue">5</span></label>
+        <input type="range" id="columns" name="columns" min="3" max="10" value="5" oninput="columnValue.innerText = columns.value">
+        <br />
+
+        <button type="submit">Start Game</button>
+    </form>
 }
