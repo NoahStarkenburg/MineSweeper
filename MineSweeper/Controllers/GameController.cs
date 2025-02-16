@@ -11,12 +11,6 @@ namespace MineSweeper.Controllers
             return View();
         }
 
-        [SessionCheckFilter]
-        public IActionResult StartGame()
-        {
-            return View();
-        }
-
         public IActionResult Index()
         {
             return View();
