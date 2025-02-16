@@ -24,16 +24,18 @@ namespace MineSweeper.Controllers
         {
             // Get user id
             string userId = GetUserById();
+            if (!CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
+            {
+                // Create new GameEngine and assign that to the view model
+                GameEngine gameEngine = new GameEngine(rows, columns, difficulty);
+                viewModel = new GameViewModel(gameEngine);
 
-            // Create new GameEngine and assign that to the view model
-            GameEngine gameEngine = new GameEngine(rows, columns, difficulty);
-            GameViewModel gameViewModel = new GameViewModel(gameEngine);
-
-            // Add gameViewModel while assigning it to the user
-            CurrentGames.Add(userId, gameViewModel);
+                // Add gameViewModel while assigning it to the user
+                CurrentGames[userId] = viewModel;
+            }
             
             // Return view of game
-            return View("MinesweeperGame", gameViewModel);
+            return View("MinesweeperGame", viewModel);
         }
 
         /// <summary>
@@ -44,6 +46,7 @@ namespace MineSweeper.Controllers
         [SessionCheckFilter]
         public IActionResult StartGame()
         {
+
             return View();
         }
 
@@ -75,8 +78,6 @@ namespace MineSweeper.Controllers
                     CurrentGames.Remove(userId); //  Remove game if lost
                 }
             }
-            // Removes games from user's id
-            CurrentGames.Remove(userId);
  
             // Returns back to start page
             return RedirectToAction("StartGame");
