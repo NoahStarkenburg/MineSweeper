@@ -403,19 +403,12 @@ namespace MineSweeper.BusinessLogic.Game_Logic
 
         public bool IsGameWin()
         {
-            bool result = false;
-            int rows = disboard.Cells.GetLength(0);
-            int cols = disboard.Cells.GetLength(1);
-
-            // Iterating through all the cells.
-            for (int row = 0; row < rows; row++)
-                for (int col = 0; col < cols; col++)
-                    // Validating if the current cell is a bomb and is flagged
-                    if (!disboard.Cells[row, col].IsBomb && disboard.Cells[row, col].IsVisited)
-                        result = true;
-                    else if (disboard.Cells[row, col].IsBomb && disboard.Cells[row, col].IsVisited)
-                        return result = false;
-            return result;
+            foreach (Cell cell in disboard.Cells)
+            {
+                if (!cell.IsBomb && !cell.IsVisited)
+                    return false;
+            }
+            return true;    
         }
 
 

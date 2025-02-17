@@ -67,22 +67,23 @@ namespace MineSweeper.Controllers
             {
                 // Update the game state
                 bool continueGame = viewModel.Game.UpdateGame(row, col, 1); // "1" represents clicking action
-
+                if (viewModel.Game.IsGameWin())
+                {
+                    CurrentGames.Remove(userId); // End the game
+                    return View("WinPage");
+                }
                 if (continueGame)
                 {
                     CurrentGames[userId] = viewModel; // Update dictionary
                     return View("MinesweeperGame", viewModel);
                 }
-                    if (viewModel.Game.IsGameWin())
-                    {
-                        CurrentGames.Remove(userId); // End the game
-                        return View("WinPage");
-                    }
-                    else
-                    {
-                        CurrentGames.Remove(userId); // End the game
-                        return View("LosePage");
-                    }
+                if (!continueGame && !viewModel.Game.IsGameWin())
+                {
+                    CurrentGames.Remove(userId);
+                    return View("LosePage");
+                }
+                    
+                    
             }
 
             // Returns back to start page if game is invalid
