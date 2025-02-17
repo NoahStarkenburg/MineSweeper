@@ -18,12 +18,12 @@ namespace MineSweeper.BusinessLogic.Game_Logic
 
         // Dates for keeping control of the timer in the game 
         private const int minRowCol = 3, maxRowCol = 10;
-        private int difficulty {  get; set; }
+        private int difficulty { get; set; }
         [JsonInclude]
         private Board disboard { get; set; }
         private bool isRunning { get; set; }
         private int totalNumBombs { get; set; }
-        private bool hasSpecial {  get; set; }
+        private bool hasSpecial { get; set; }
         private bool hasHitBomb { get; set; }
 
 
@@ -195,9 +195,9 @@ namespace MineSweeper.BusinessLogic.Game_Logic
 
             // Thowing specials in
             List<Point> blankLocations = new List<Point>();
-            for(int row = 0; row < rows; row++)
+            for (int row = 0; row < rows; row++)
             {
-                for(int col = 0; col < columns; col++)
+                for (int col = 0; col < columns; col++)
                 {
                     // Checking to see if the cell is blank and will add to list.
                     if (!disboard.Cells[row, col].IsBomb && disboard.Cells[row, col].NumBombNeighbors == 0)
@@ -278,7 +278,7 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                     hasSpecial = false;
 
                     // If it is a bomb, we are going to go ahead and flag it
-                    if(disboard.Cells[selectedRow, selectedCol].IsBomb)
+                    if (disboard.Cells[selectedRow, selectedCol].IsBomb)
                     {
                         disboard.Cells[selectedRow, selectedCol].IsFlagged = true;
                         return AllBombsFlagged();
@@ -298,7 +298,7 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                     {
                         disboard.Cells[selectedRow, selectedCol].IsVisited = true;
                     }
-                    
+
 
                     break;
             }
@@ -381,10 +381,43 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             if (!result)
                 Console.WriteLine($"You found all {totalNumBombs} Bombs! Great Job!");
             return result;
-            
+
         }
 
-        
+        //public bool IsGameOver()
+        //{
+        //    bool result = false;
+        //    int rows = disboard.Cells.GetLength(0);
+        //    int cols = disboard.Cells.GetLength(1);
+
+        //    // Iterating through all the cells.
+        //    for (int row = 0; row < rows; row++)
+        //        for (int col = 0; col < cols; col++)
+        //            // Validating if the current cell is a bomb and is flagged
+        //            if (disboard.Cells[row, col].IsBomb && disboard.Cells[row, col].IsVisited)
+        //                return result = true;
+        //            else if (!disboard.Cells[row, col].IsBomb && !disboard.Cells[row, col].IsVisited)
+        //                result = false;
+        //    return result;
+        //}
+
+        public bool IsGameWin()
+        {
+            bool result = false;
+            int rows = disboard.Cells.GetLength(0);
+            int cols = disboard.Cells.GetLength(1);
+
+            // Iterating through all the cells.
+            for (int row = 0; row < rows; row++)
+                for (int col = 0; col < cols; col++)
+                    // Validating if the current cell is a bomb and is flagged
+                    if (!disboard.Cells[row, col].IsBomb && disboard.Cells[row, col].IsVisited)
+                        result = true;
+                    else if (disboard.Cells[row, col].IsBomb && disboard.Cells[row, col].IsVisited)
+                        return result = false;
+            return result;
+        }
+
 
         //-----------------------------------------------------------------------------
         // END OF METHODS

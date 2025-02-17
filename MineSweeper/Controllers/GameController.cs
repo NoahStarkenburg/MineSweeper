@@ -33,7 +33,7 @@ namespace MineSweeper.Controllers
                 // Add gameViewModel while assigning it to the user
                 CurrentGames[userId] = viewModel;
             }
-            
+
             // Return view of game
             return View("MinesweeperGame", viewModel);
         }
@@ -65,21 +65,27 @@ namespace MineSweeper.Controllers
             // Gets value (which is a bool) if the game is still running
             if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
             {
-                //  Ensure game state updates properly
+                // Update the game state
                 bool continueGame = viewModel.Game.UpdateGame(row, col, 1); // "1" represents clicking action
 
                 if (continueGame)
                 {
-                    CurrentGames[userId] = viewModel; //  Update dictionary
+                    CurrentGames[userId] = viewModel; // Update dictionary
                     return View("MinesweeperGame", viewModel);
                 }
-                else
-                {
-                    CurrentGames.Remove(userId); //  Remove game if lost
-                }
+                    if (viewModel.Game.IsGameWin())
+                    {
+                        CurrentGames.Remove(userId); // End the game
+                        return View("WinPage");
+                    }
+                    else
+                    {
+                        CurrentGames.Remove(userId); // End the game
+                        return View("LosePage");
+                    }
             }
- 
-            // Returns back to start page
+
+            // Returns back to start page if game is invalid
             return RedirectToAction("StartGame");
         }
 
@@ -90,6 +96,5 @@ namespace MineSweeper.Controllers
             UserModel user = JsonSerializer.DeserializeFromString<UserModel>(userJson);
             return user.Id.ToString();
         }
-
     }
 }
