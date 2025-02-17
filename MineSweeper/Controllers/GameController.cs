@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MineSweeper.BusinessLogic.Game_Logic;
 using MineSweeper.Models;
+using MineSweeper.Models.Game_Models;
 using RegisterAndLoginAPP.Filters;
 using ServiceStack.Text;
 
@@ -67,28 +68,42 @@ namespace MineSweeper.Controllers
             {
                 // Update the game state
                 bool continueGame = viewModel.Game.UpdateGame(row, col, 1); // "1" represents clicking action
+
                 if (viewModel.Game.IsGameWin())
                 {
+                    int finalScore = viewModel.Game.GenerateScore();
                     CurrentGames.Remove(userId); // End the game
-                    return View("WinPage");
+                    return RedirectToAction("WinPage", new { score = finalScore });
                 }
+
                 if (continueGame)
                 {
                     CurrentGames[userId] = viewModel; // Update dictionary
                     return View("MinesweeperGame", viewModel);
                 }
+
                 if (!continueGame && !viewModel.Game.IsGameWin())
                 {
                     CurrentGames.Remove(userId);
                     return View("LosePage");
                 }
-                    
-                    
             }
 
             // Returns back to start page if game is invalid
             return RedirectToAction("StartGame");
         }
+
+
+        // Returns back to start page if game is invalid
+
+
+
+        public IActionResult WinPage(int score)
+        {
+            ViewBag.Score = score; // Store the score in ViewBag
+            return View();
+        }
+
 
         // Should be moved to DAO service class
         private string GetUserById()

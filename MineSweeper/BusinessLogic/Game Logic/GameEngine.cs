@@ -26,6 +26,8 @@ namespace MineSweeper.BusinessLogic.Game_Logic
         private bool hasSpecial { get; set; }
         private bool hasHitBomb { get; set; }
 
+        public int FinalScore { get; set; }
+
 
 
         //-----------------------------------------------------------------------------
@@ -411,6 +413,18 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             return true;    
         }
 
+        public int GenerateScore()
+        {
+            int score = 0;
+            foreach (Cell cell in disboard.Cells)
+            {
+                if (cell.IsVisited)
+                    score++;
+            }
+            
+            return score;
+
+        }
 
         //-----------------------------------------------------------------------------
         // END OF METHODS
