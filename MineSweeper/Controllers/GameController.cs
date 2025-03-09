@@ -94,7 +94,41 @@ namespace MineSweeper.Controllers
         }
 
 
-        // Returns back to start page if game is invalid
+        [HttpPost]
+        public IActionResult PartialCellUpdate(int row, int col)
+        {
+            // Get user id
+            string userId = GetUserById();
+
+            // Gets value (which is a bool) if the game is still running
+            if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
+            {
+                // Update the game state
+                bool continueGame = viewModel.Game.UpdateGame(row, col, 1); // "1" represents clicking action
+
+                if (viewModel.Game.IsGameWin())
+                {
+                    int finalScore = viewModel.Game.GenerateScore();
+                    CurrentGames.Remove(userId); // End the game
+                    return RedirectToAction("WinPage", new { score = finalScore });
+                }
+
+                if (continueGame)
+                {
+                    CurrentGames[userId] = viewModel; // Update dictionary
+                    return View("MinesweeperGame", viewModel);
+                }
+
+                if (!continueGame && !viewModel.Game.IsGameWin())
+                {
+                    CurrentGames.Remove(userId);
+                    return View("LosePage");
+                }
+            }
+
+            // Returns back to start page if game is invalid
+            return PartialView("_Cell");
+        }
 
 
 
@@ -112,5 +146,39 @@ namespace MineSweeper.Controllers
             UserModel user = JsonSerializer.DeserializeFromString<UserModel>(userJson);
             return user.Id.ToString();
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult FlagCell(CellActionModel action)
+        {
+            string userId = GetUserById();
+
+            if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
+            {
+                viewModel.Game.UpdateGame(action.Row, action.Col, 2); // 2 = flag
+
+                ViewBag.Row = action.Row;
+                ViewBag.Col = action.Col;
+
+                return PartialView("_Cell", viewModel);
+            }
+
+            return BadRequest();
+        }
+
+
+        [HttpGet]
+        public IActionResult GetElapsedTime()
+        {
+            string userId = GetUserById();
+            if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
+            {
+                var elapsedSeconds = (int)viewModel.GetElapsedTime().TotalSeconds;
+                return Json(elapsedSeconds);
+            }
+
+            return Json(0);
+        }
+
     }
 }

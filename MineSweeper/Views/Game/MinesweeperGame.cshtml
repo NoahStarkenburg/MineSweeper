@@ -1,62 +1,56 @@
 ﻿@model MineSweeper.Models.GameViewModel
 
-<h2>Minesweeper Game</h2>
+<div id="timestamp" style="font-weight: bold; margin-bottom: 10px;">
+    Elapsed Time: 0 seconds
+</div>
 
-@if (Model != null && Model.Game != null)
-{
-    Random random = new Random();
-    <table border="1">
-        @for (int r = 0; r < Model.Game.GetBoardState().NumRows; r++)
+<div class="container">
+
+    <table border="1" id="game-board">
+        @for (int row = 0; row < Model.Game.GetBoardState().NumRows; row++)
         {
             <tr>
-                @for (int c = 0; c < Model.Game.GetBoardState().NumColumns; c++)
+                @for (int col = 0; col < Model.Game.GetBoardState().NumColumns; col++)
                 {
-                    var cell = Model.Game.GetBoardState().Cells[r, c];
-
-                    <td style="width: 30px; height: 30px; text-align: center; border: 1px solid black;">
-
-                        @if (cell.IsVisited)
-                        {
-                            @if (cell.IsBomb)
-                            {
-                                <img src="~/assets/images/Skull.png" />
-                            }
-                            else if (cell.NumBombNeighbors > 0)
-                            {
-                                <img src="~/assets/images/Number @(cell.NumBombNeighbors).png" />
-                            }
-                            else if (cell.IsSpecial)
-                            {
-                                <img src="~/assets/images/Gold.png" />
-                            }
-                            else
-                            {
-                                <img src="~/assets/images/Tile Flat.png" />
-                            }
+                    <td style="width: 30px; height: 30px; text-align: center; border: 1px solid black;" class="cell">
+                        @{
+                            ViewData["Row"] = row;
+                            ViewData["Col"] = col;
                         }
-                        else if (cell.IsFlagged)
-                        {
-                            <img src="~/assets/images/flag.jpg" />
-                        }
-                        else
-                        {
-                            <form asp-action="PlayMove" method="post" style="display:inline;">
-                                <input type="hidden" name="row" value="@r" />
-                                <input type="hidden" name="col" value="@c" />
-                                <input type="hidden" name="difficulty" value="@Model.Game.GetDifficulty()" />
-                                <button type="submit" style="border: none; background: none; padding: 0;">
-                                    <img src="~/assets/images/Tile @(random.Next(1,3)).png"/>
-                                </button>
-                            </form>
-                        }
+                        @Html.Partial("_Cell", Model)
                     </td>
                 }
             </tr>
         }
     </table>
-}
-else
-{
-    <p>Error: Game not found.</p>
-    <a asp-action="StartGame">Start a New Game</a>
+</div>
+
+
+
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $(document).on("click", ".game-button button", function (e) {
+                e.preventDefault();
+                var form = $(this).closest("form");
+                $.post(form.attr("action"), form.serialize(), function (data) {
+                    $(".container").html(data);
+                });
+            });
+        });
+    </script>
+    <script>
+        setInterval(() => {
+            $.ajax({
+                url: '/Game/GetElapsedTime',
+                type: 'GET',
+                success: function (data) {
+                    $('#timestamp').text(`Elapsed Time: ${data} seconds`);
+                }
+            });
+        }, 1000);
+    </script>
+
 }
