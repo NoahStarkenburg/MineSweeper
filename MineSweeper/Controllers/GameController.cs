@@ -60,13 +60,10 @@ namespace MineSweeper.Controllers
         [HttpPost]
         public IActionResult PlayMove(int row, int col)
         {
-            // Get user id
             string userId = GetUserById();
 
-            // Gets value (which is a bool) if the game is still running
             if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
             {
-                // Update the game state
                 bool continueGame = viewModel.Game.UpdateGame(row, col, 1); // "1" represents clicking action
 
                 if (viewModel.Game.IsGameWin())
@@ -78,7 +75,8 @@ namespace MineSweeper.Controllers
 
                 if (continueGame)
                 {
-                    CurrentGames[userId] = viewModel; // Update dictionary
+                    // 🔹 Keep existing GameEngine instance
+                    CurrentGames[userId] = viewModel;
                     return View("MinesweeperGame", viewModel);
                 }
 
@@ -89,9 +87,40 @@ namespace MineSweeper.Controllers
                 }
             }
 
-            // Returns back to start page if game is invalid
             return RedirectToAction("StartGame");
         }
+
+        [HttpPost]
+        public IActionResult PlayMovePartial(int row, int col)
+        {
+            string userId = GetUserById();
+            if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
+            {
+                bool continueGame = viewModel.Game.UpdateGame(row, col, 1); // 1 = left-click action
+
+                if (viewModel.Game.IsGameWin())
+                {
+                    int finalScore = viewModel.Game.GenerateScore();
+                    CurrentGames.Remove(userId);
+                    return RedirectToAction("WinPage", new { score = finalScore });
+                }
+                if (!continueGame && !viewModel.Game.IsGameWin())
+                {
+                    // When a bomb is clicked, the game ends (loss)
+                    CurrentGames.Remove(userId);
+                    return View("LosePage");
+                }
+
+                // Update the board state in the current game
+                CurrentGames[userId] = viewModel;
+                // Return the entire board partial view to capture flood fill changes
+                return PartialView("_GameBoard", viewModel);
+            }
+            return BadRequest();
+        }
+
+
+
 
 
         [HttpPost]
@@ -148,23 +177,31 @@ namespace MineSweeper.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult FlagCell(CellActionModel action)
+        public IActionResult FlagCell(int Row, int Col)
         {
             string userId = GetUserById();
 
             if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
             {
-                viewModel.Game.UpdateGame(action.Row, action.Col, 2); // 2 = flag
+                viewModel.Game.UpdateGame(Row, Col, 2); // 2 = flag action
 
-                ViewBag.Row = action.Row;
-                ViewBag.Col = action.Col;
+                if (viewModel.Game.AllBombsFlagged()) // Check if game is won
+                {
+                    int finalScore = viewModel.Game.GenerateScore();
+                    CurrentGames.Remove(userId); // End game
+                    return Json(new { gameWon = true, redirectUrl = Url.Action("WinPage", new { score = finalScore }) });
+                }
 
-                return PartialView("_Cell", viewModel);
+                ViewData["Row"] = Row;
+                ViewData["Col"] = Col;
+
+                return PartialView("_Cell", viewModel); // ✅ Only update flagged cell
             }
 
             return BadRequest();
         }
+
+
 
 
         [HttpGet]
@@ -173,12 +210,13 @@ namespace MineSweeper.Controllers
             string userId = GetUserById();
             if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
             {
-                var elapsedSeconds = (int)viewModel.GetElapsedTime().TotalSeconds;
+                int elapsedSeconds = (int)viewModel.Game.GetElapsedTime().TotalSeconds;
                 return Json(elapsedSeconds);
             }
 
             return Json(0);
         }
+
 
     }
 }

@@ -32,7 +32,8 @@
     }
     else
     {
-        <form asp-action="PlayMove" method="post" style="display:inline;">
+        <!-- Use a class for left-click moves -->
+        <form asp-action="PlayMovePartial" method="post" class="play-move-form" style="display:inline;">
             <input type="hidden" name="row" value="@row" />
             <input type="hidden" name="col" value="@col" />
             <input type="hidden" name="difficulty" value="@Model.Game.GetDifficulty()" />

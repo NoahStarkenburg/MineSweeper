@@ -28,6 +28,8 @@ namespace MineSweeper.BusinessLogic.Game_Logic
 
         public int FinalScore { get; set; }
 
+        private DateTime startTime { get; set; }
+
 
 
         //-----------------------------------------------------------------------------
@@ -57,6 +59,8 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             this.hasSpecial = false;
             this.disboard = new Board(rows, columns);
             this.difficulty = difficulty;
+            if (startTime == default)
+                startTime = DateTime.UtcNow;
 
 
             // This method is depricated due to violaiton of seperatration of concerns
@@ -359,32 +363,22 @@ namespace MineSweeper.BusinessLogic.Game_Logic
         /// <returns>bComtinueGame: bool - Will return true only if there are more bombs to find.</returns>
         public bool AllBombsFlagged()
         {
-            // Accumilator
-            int counter = 0;
-            bool result = false;
-            int rows = disboard.Cells.GetLength(0);
-            int cols = disboard.Cells.GetLength(1);
+            int flaggedBombs = 0;
+            int totalBombs = totalNumBombs;
+            int incorrectFlags = 0;
 
-            // Iterating through all the cells.
-            // NOTE: Normally it's bad practice to have bracketless bodies nested like this. However; The easier it is to read the code the better in my opinion.
-            // You can remove the body brackets in conditions like this if there is only one statement in the body. 
-            for (int row = 0; row < rows; row++)
-                for (int col = 0; col < cols; col++)
-                    // Validating if the current cell is a bomb and is flagged
-                    if (disboard.Cells[row, col].IsBomb && disboard.Cells[row, col].IsFlagged)
-                        counter++;
-                    else if (!disboard.Cells[row, col].IsBomb && disboard.Cells[row, col].IsFlagged)
-                        return true;
+            foreach (Cell cell in disboard.Cells)
+            {
+                if (cell.IsBomb && cell.IsFlagged)
+                    flaggedBombs++; // Correctly flagged bomb
+                else if (!cell.IsBomb && cell.IsFlagged)
+                    incorrectFlags++; // Incorrect flag
+            }
 
-
-
-            // If all the bombs are flagged. The game is over.
-            result = counter == totalNumBombs ? false : true;
-            if (!result)
-                Console.WriteLine($"You found all {totalNumBombs} Bombs! Great Job!");
-            return result;
-
+            // Ensure that ALL bombs are flagged AND there are NO incorrect flags
+            return (flaggedBombs == totalBombs) && (incorrectFlags == 0);
         }
+
 
         //public bool IsGameOver()
         //{
@@ -425,6 +419,12 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             return score;
 
         }
+
+        public TimeSpan GetElapsedTime()
+        {
+            return DateTime.UtcNow - startTime; // Calculate time difference
+        }
+
 
         //-----------------------------------------------------------------------------
         // END OF METHODS

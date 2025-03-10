@@ -1,0 +1,19 @@
+﻿@model MineSweeper.Models.GameViewModel
+
+<table border="1" id="game-board">
+    @for (int row = 0; row < Model.Game.GetBoardState().NumRows; row++)
+    {
+        <tr>
+            @for (int col = 0; col < Model.Game.GetBoardState().NumColumns; col++)
+            {
+                <td class="cell" id="cell-@row-@col" data-row="@row" data-col="@col" style="width:30px; height:30px; text-align:center; border:1px solid black;">
+                    @{
+                        ViewData["Row"] = row;
+                        ViewData["Col"] = col;
+                    }
+                    @Html.Partial("_Cell", Model)
+                </td>
+            }
+        </tr>
+    }
+</table>

@@ -4,45 +4,16 @@
     Elapsed Time: 0 seconds
 </div>
 
-<div class="container">
-
-    <table border="1" id="game-board">
-        @for (int row = 0; row < Model.Game.GetBoardState().NumRows; row++)
-        {
-            <tr>
-                @for (int col = 0; col < Model.Game.GetBoardState().NumColumns; col++)
-                {
-                    <td style="width: 30px; height: 30px; text-align: center; border: 1px solid black;" class="cell">
-                        @{
-                            ViewData["Row"] = row;
-                            ViewData["Col"] = col;
-                        }
-                        @Html.Partial("_Cell", Model)
-                    </td>
-                }
-            </tr>
-        }
-    </table>
+<div id="game-board-container" class="container">
+    @Html.Partial("_GameBoard", Model)
 </div>
-
-
-
 
 @section Scripts {
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Timer stays outside the container -->
     <script>
-        $(document).ready(function () {
-            $(document).on("click", ".game-button button", function (e) {
-                e.preventDefault();
-                var form = $(this).closest("form");
-                $.post(form.attr("action"), form.serialize(), function (data) {
-                    $(".container").html(data);
-                });
-            });
-        });
-    </script>
-    <script>
-        setInterval(() => {
+        function updateElapsedTime() {
             $.ajax({
                 url: '/Game/GetElapsedTime',
                 type: 'GET',
@@ -50,7 +21,47 @@
                     $('#timestamp').text(`Elapsed Time: ${data} seconds`);
                 }
             });
-        }, 1000);
+        }
+        setInterval(updateElapsedTime, 1000);
     </script>
 
+    <!-- Intercept left-click form submission (for revealing cells) -->
+    <script>
+        $(document).on("submit", ".play-move-form", function (e) {
+            e.preventDefault();
+            var form = $(this);
+            $.post(form.attr("action"), form.serialize(), function (data) {
+                if (data.gameWon) {
+                    window.location.href = data.redirectUrl;
+                } else if (data.gameLost) {
+                    window.location.href = data.redirectUrl;
+                } else {
+                    // Update the entire board container with the returned partial view
+                    $("#game-board-container").html(data);
+                }
+            });
+        });
+    </script>
+
+    <!-- Right-click handler (for flagging a cell) can still update just that cell -->
+    <script>
+        $(document).on("contextmenu", ".cell", function (event) {
+            event.preventDefault();
+            var row = $(this).data("row");
+            var col = $(this).data("col");
+            $.post("/Game/FlagCell", { Row: row, Col: col })
+                .done(function (data) {
+                    if (data.gameWon) {
+                        window.location.href = data.redirectUrl;
+                    } else {
+                        // For flagging, you may choose to update only the cell
+                        $("#cell-" + row + "-" + col).replaceWith(data);
+                    }
+                })
+                .fail(function () {
+                    alert("Error processing request.");
+                });
+            return false;
+        });
+    </script>
 }
