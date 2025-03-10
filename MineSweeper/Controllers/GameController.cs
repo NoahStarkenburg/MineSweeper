@@ -195,7 +195,7 @@ namespace MineSweeper.Controllers
                 ViewData["Row"] = Row;
                 ViewData["Col"] = Col;
 
-                return PartialView("_Cell", viewModel); // ✅ Only update flagged cell
+                return PartialView("_Cell", viewModel); //  Only update flagged cell
             }
 
             return BadRequest();
