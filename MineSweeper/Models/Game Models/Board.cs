@@ -11,6 +11,7 @@ namespace MineSweeper.Models.Game_Models
         //-----------------------------------------------------------------------------
         private int numRows;
         private int numColumns;
+        public int difficulty {  get; private set; }
         public Cell[,] Cells { get; set; }
         //-----------------------------------------------------------------------------
         // END OF PROPERTIES
@@ -25,11 +26,14 @@ namespace MineSweeper.Models.Game_Models
         /// </summary>
         /// <param name="numrows">The number of rows for the disboard</param>
         /// <param name="numcols">The number of columns for the disboard</param>
-        public Board(int numrows, int numcols)
+        public Board(int numrows, int numcols, int gameDifficulty)
         {
             // Setting up the rows and columns
             NumRows = numrows;
             numColumns = numcols;
+
+            difficulty = gameDifficulty;
+
             Cells = new Cell[numrows, numcols];
 
             Cells = new Cell[numrows, numcols];

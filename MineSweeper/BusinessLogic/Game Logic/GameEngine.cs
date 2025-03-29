@@ -42,11 +42,16 @@ namespace MineSweeper.BusinessLogic.Game_Logic
         //-----------------------------------------------------------------------------
 
         /// <summary>
-        /// Default Constructor. Takes no action. Used for the initilization of the forms.
+        /// Existing board game engine
         /// </summary>
-        public GameEngine()
+        /// <param name="existingBoard"></param>
+        public GameEngine(Board existingBoard)
         {
-            // No action taken.
+            isRunning = true;
+            hasHitBomb = false;
+            this.hasSpecial = false;
+            this.disboard = existingBoard; // Use the existing board instead of initializing a new one
+            this.difficulty = existingBoard.difficulty; // Make sure difficulty is correctly set
         }
 
         /// <summary>
@@ -57,7 +62,7 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             isRunning = true;
             hasHitBomb = false;
             this.hasSpecial = false;
-            this.disboard = new Board(rows, columns);
+            this.disboard = new Board(rows, columns, difficulty);
             this.difficulty = difficulty;
             if (startTime == default)
                 startTime = DateTime.UtcNow;

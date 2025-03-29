@@ -1,7 +1,7 @@
 ﻿using MySql.Data.MySqlClient;
 using System.Data;
 
-namespace MineSweeper.Models
+namespace MineSweeper.Models.DAOs
 {
     public class UserDAO : IUserManager
     {

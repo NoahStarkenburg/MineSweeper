@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MineSweeper.BusinessLogic.Game_Logic;
 using MineSweeper.Models;
+using MineSweeper.Models.DAOs;
 using MineSweeper.Models.Game_Models;
+using Newtonsoft.Json;
 using RegisterAndLoginAPP.Filters;
 using ServiceStack.Text;
 
@@ -11,6 +13,13 @@ namespace MineSweeper.Controllers
     {
         // Dictionary that holds all games accross the site
         private static Dictionary<string, GameViewModel> CurrentGames = new Dictionary<string, GameViewModel>();
+        private IConfiguration _configuration;
+        private SavedGamesDAO savedGamesDAO;
+        public GameController(IConfiguration configuration, SavedGamesDAO savedGamesDAO)
+        {
+            _configuration = configuration;
+            this.savedGamesDAO = savedGamesDAO;
+        }
 
         /// <summary>
         /// Starts game with the input from rows, cols, and the difficulty
@@ -168,14 +177,6 @@ namespace MineSweeper.Controllers
         }
 
 
-        // Should be moved to DAO service class
-        private string GetUserById()
-        {
-            string userJson = HttpContext.Session.GetString("User");
-            UserModel user = JsonSerializer.DeserializeFromString<UserModel>(userJson);
-            return user.Id.ToString();
-        }
-
         [HttpPost]
         public IActionResult FlagCell(int Row, int Col)
         {
@@ -215,6 +216,66 @@ namespace MineSweeper.Controllers
             }
 
             return Json(0);
+        }
+
+        public async Task SaveGame()
+        {
+            string userId = GetUserById();
+            SavedGame savedGame = new SavedGame();
+            if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
+            {
+                // Use Newtonsoft.Json.JsonSerializer explicitly
+                string json = JsonConvert.SerializeObject(viewModel.Game.GetBoardState(), Formatting.Indented);
+
+                savedGame.UserId = Convert.ToInt32(userId);
+                savedGame.DateSaved = DateTime.Now;
+                savedGame.GameData = json;
+
+                await savedGamesDAO.AddSaveGame(savedGame);
+            }
+        }
+
+        [Route("Game/LoadGame/{id}")]
+        public async Task<IActionResult> LoadGame(int id)
+        {
+            string userId = GetUserById();
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToAction("StartGame"); // Redirect to StartGame if the user is not logged in.
+            }
+
+            // Retrieve the saved game for the current user by the saved game's ID
+            SavedGame savedGame = await savedGamesDAO.GetSavedGameById(id);
+            if (savedGame == null)
+            {
+                return RedirectToAction("StartGame"); // If the saved game is not found, redirect to StartGame.
+            }
+
+            // Deserialize the saved game data (Board state)
+            Board board = JsonConvert.DeserializeObject<Board>(savedGame.GameData);
+
+            // Initialize the game engine with the deserialized board
+            GameEngine gameEngine = new GameEngine(board); // Pass the deserialized board
+
+            // Create a new GameViewModel to hold the game state
+            GameViewModel viewModel = new GameViewModel(gameEngine);
+
+            // Store the current game in memory for the user
+            CurrentGames[userId] = viewModel;
+
+            // Return the "MinesweeperGame" view with the restored game state
+            return View("MinesweeperGame", viewModel);
+        }
+
+        // Should be moved to DAO service class
+        private string GetUserById()
+        {
+            string userJson = HttpContext.Session.GetString("User");
+
+            // Deserialize using Newtonsoft.Json
+            UserModel user = JsonConvert.DeserializeObject<UserModel>(userJson);
+
+            return user?.Id.ToString();  // Safely return the UserId if user is not null
         }
 
 

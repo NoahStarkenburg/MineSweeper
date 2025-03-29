@@ -1,4 +1,5 @@
 using MineSweeper.Models;
+using MineSweeper.Models.DAOs;
 
 namespace MineSweeper
 {
@@ -12,8 +13,8 @@ namespace MineSweeper
             builder.Services.AddControllersWithViews();
 
             builder.Services.AddSingleton<IUserManager, UserDAO>();
+            builder.Services.AddSingleton<SavedGamesDAO>();
 
-            
             builder.Services.AddSession(options =>
             {
                 options.IdleTimeout = TimeSpan.FromMinutes(30);
