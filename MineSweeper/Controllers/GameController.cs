@@ -13,6 +13,7 @@ namespace MineSweeper.Controllers
     {
         // Dictionary that holds all games accross the site
         private static Dictionary<string, GameViewModel> CurrentGames = new Dictionary<string, GameViewModel>();
+
         private IConfiguration _configuration;
         private SavedGamesDAO savedGamesDAO;
         public GameController(IConfiguration configuration, SavedGamesDAO savedGamesDAO)
@@ -206,16 +207,16 @@ namespace MineSweeper.Controllers
 
 
         [HttpGet]
-        public IActionResult GetElapsedTime()
+        public int GetElapsedTime()
         {
             string userId = GetUserById();
             if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
             {
                 int elapsedSeconds = (int)viewModel.Game.GetElapsedTime().TotalSeconds;
-                return Json(elapsedSeconds);
+                return elapsedSeconds;
             }
 
-            return Json(0);
+            return 0;
         }
 
         public async Task SaveGame()
@@ -230,12 +231,13 @@ namespace MineSweeper.Controllers
                 savedGame.UserId = Convert.ToInt32(userId);
                 savedGame.DateSaved = DateTime.Now;
                 savedGame.GameData = json;
+                savedGame.TimePlayed = GetElapsedTime();
 
                 await savedGamesDAO.AddSaveGame(savedGame);
             }
         }
 
-        [Route("Game/LoadGame/{id}")]
+        
         public async Task<IActionResult> LoadGame(int id)
         {
             string userId = GetUserById();
@@ -255,7 +257,7 @@ namespace MineSweeper.Controllers
             Board board = JsonConvert.DeserializeObject<Board>(savedGame.GameData);
 
             // Initialize the game engine with the deserialized board
-            GameEngine gameEngine = new GameEngine(board); // Pass the deserialized board
+            GameEngine gameEngine = new GameEngine(board, savedGame.TimePlayed); // Pass the deserialized board
 
             // Create a new GameViewModel to hold the game state
             GameViewModel viewModel = new GameViewModel(gameEngine);

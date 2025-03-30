@@ -17,14 +17,14 @@ namespace MineSweeper.Models.DAOs
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 connection.Open ();
-                string query = @"INSERT INTO savedgames (UserId, DateSaved, GameData) VALUES (@UserId, @DateSaved, @GameData)";
+                string query = @"INSERT INTO savedgames (UserId, DateSaved, GameData, TimePlayed) VALUES (@UserId, @DateSaved, @GameData, @TimePlayed)";
 
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue ("@UserId", savedGame.UserId);
                     command.Parameters.AddWithValue("@DateSaved", savedGame.DateSaved);
                     command.Parameters.AddWithValue("@GameData", savedGame.GameData);
-
+                    command.Parameters.AddWithValue("@TimePlayed", savedGame.TimePlayed);
                     await command.ExecuteNonQueryAsync();
                 }
             }
@@ -50,7 +50,8 @@ namespace MineSweeper.Models.DAOs
                                 Id = reader.GetInt32(0),
                                 UserId = reader.GetInt32(1),
                                 DateSaved = reader.GetDateTime(2),
-                                GameData = reader.GetString(3)
+                                GameData = reader.GetString(3),
+                                TimePlayed = reader.GetInt32(4)
                             };
                             savedGames.Add(savedGame);
                         }
@@ -78,7 +79,8 @@ namespace MineSweeper.Models.DAOs
                                 Id = reader.GetInt32(0),
                                 UserId = reader.GetInt32(1),
                                 DateSaved = reader.GetDateTime(2),
-                                GameData = reader.GetString(3)
+                                GameData = reader.GetString(3),
+                                TimePlayed = reader.GetInt32(4)
                             };
                             return savedGame;
                         }
@@ -110,14 +112,15 @@ namespace MineSweeper.Models.DAOs
         {
             using(MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                string query = @"UPDATE savedgames SET UserId = @UserId, DateSaved = @DateSaved, GameData = @GameData WHERE Id = @Id";
+                string query = @"UPDATE savedgames SET UserId = @UserId, DateSaved = @DateSaved, GameData = @GameData, TimePlayed = @TimePlayed WHERE Id = @Id";
                 await connection.OpenAsync();
 
                 using(MySqlCommand command = new MySqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("@UserId", savedGame.UserId);
                     command.Parameters.AddWithValue("@DateSaved", savedGame.DateSaved);
-                    command.Parameters.AddWithValue("GameData", savedGame.GameData);
+                    command.Parameters.AddWithValue("@GameData", savedGame.GameData);
+                    command.Parameters.AddWithValue("@TimePlayed", savedGame.TimePlayed);
 
                     await command.ExecuteNonQueryAsync();
                 }

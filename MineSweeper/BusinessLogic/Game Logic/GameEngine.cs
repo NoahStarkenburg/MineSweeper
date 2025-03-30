@@ -45,13 +45,14 @@ namespace MineSweeper.BusinessLogic.Game_Logic
         /// Existing board game engine
         /// </summary>
         /// <param name="existingBoard"></param>
-        public GameEngine(Board existingBoard)
+        public GameEngine(Board existingBoard, int timePlayed)
         {
             isRunning = true;
             hasHitBomb = false;
             this.hasSpecial = false;
             this.disboard = existingBoard; // Use the existing board instead of initializing a new one
             this.difficulty = existingBoard.difficulty; // Make sure difficulty is correctly set
+            this.startTime = DateTime.UtcNow - TimeSpan.FromSeconds(timePlayed);
         }
 
         /// <summary>
