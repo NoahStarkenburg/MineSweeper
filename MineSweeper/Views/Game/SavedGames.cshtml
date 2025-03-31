@@ -37,9 +37,9 @@
                 @Html.DisplayFor(modelItem => item.TimePlayed) seconds
             </td>
             <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
+                    @Html.ActionLink("Load Game", "LoadGame", "Game", new { id = item.Id}, null)
+
+                
             </td>
         </tr>
 }

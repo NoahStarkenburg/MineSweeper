@@ -220,6 +220,7 @@ namespace MineSweeper.Controllers
             return 0;
         }
 
+        [SessionCheckFilter]
         public async Task<IActionResult> SaveGame()
         {
             string userId = GetUserById();
@@ -231,7 +232,7 @@ namespace MineSweeper.Controllers
             return View("SavedGames", savedGames);
         }
 
-        
+        [SessionCheckFilter]
         public async Task<IActionResult> LoadGame(int id)
         {
             string userId = GetUserById();
