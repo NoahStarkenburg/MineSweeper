@@ -1,9 +1,10 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using MineSweeper.Models.DAOs.InterfacesDAOs;
 using MySql.Data.MySqlClient;
 
 namespace MineSweeper.Models.DAOs
 {
-    public class SavedGamesDAO
+    public class SavedGamesDAO : ISavedGamesDAO
     {
         private readonly string _connectionString;
 

@@ -53,6 +53,13 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             this.disboard = existingBoard; // Use the existing board instead of initializing a new one
             this.difficulty = existingBoard.difficulty; // Make sure difficulty is correctly set
             this.startTime = DateTime.UtcNow - TimeSpan.FromSeconds(timePlayed);
+
+            this.totalNumBombs = 0;
+            foreach (var cell in disboard.Cells)
+            {
+                if (cell.IsBomb)
+                    this.totalNumBombs++;
+            }
         }
 
         /// <summary>
@@ -376,9 +383,18 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             foreach (Cell cell in disboard.Cells)
             {
                 if (cell.IsBomb && cell.IsFlagged)
+                {
                     flaggedBombs++; // Correctly flagged bomb
+                    Console.WriteLine("Correct flag");
+
+                }
+                
                 else if (!cell.IsBomb && cell.IsFlagged)
+                {
                     incorrectFlags++; // Incorrect flag
+                    Console.WriteLine("InCorrect flag");
+
+                }
             }
 
             // Ensure that ALL bombs are flagged AND there are NO incorrect flags

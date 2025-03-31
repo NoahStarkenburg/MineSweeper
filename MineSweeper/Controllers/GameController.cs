@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MineSweeper.BusinessLogic.Game_Logic;
+using MineSweeper.BusinessLogic.LogicInterfaces;
 using MineSweeper.Models;
 using MineSweeper.Models.DAOs;
 using MineSweeper.Models.Game_Models;
@@ -15,11 +16,11 @@ namespace MineSweeper.Controllers
         private static Dictionary<string, GameViewModel> CurrentGames = new Dictionary<string, GameViewModel>();
 
         private IConfiguration _configuration;
-        private SavedGamesDAO savedGamesDAO;
-        public GameController(IConfiguration configuration, SavedGamesDAO savedGamesDAO)
+        private ISavedGamesService _savedGamesService;
+        public GameController(IConfiguration configuration, ISavedGamesService savedGamesService)
         {
             _configuration = configuration;
-            this.savedGamesDAO = savedGamesDAO;
+            _savedGamesService = savedGamesService;
         }
 
         /// <summary>
@@ -219,22 +220,14 @@ namespace MineSweeper.Controllers
             return 0;
         }
 
-        public async Task SaveGame()
+        public async Task<IActionResult> SaveGame()
         {
             string userId = GetUserById();
-            SavedGame savedGame = new SavedGame();
             if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
             {
-                // Use Newtonsoft.Json.JsonSerializer explicitly
-                string json = JsonConvert.SerializeObject(viewModel.Game.GetBoardState(), Formatting.Indented);
-
-                savedGame.UserId = Convert.ToInt32(userId);
-                savedGame.DateSaved = DateTime.Now;
-                savedGame.GameData = json;
-                savedGame.TimePlayed = GetElapsedTime();
-
-                await savedGamesDAO.AddSaveGame(savedGame);
+                await _savedGamesService.SaveGame(userId, viewModel);
             }
+            return View("StartGame");
         }
 
         
@@ -246,21 +239,7 @@ namespace MineSweeper.Controllers
                 return RedirectToAction("StartGame"); // Redirect to StartGame if the user is not logged in.
             }
 
-            // Retrieve the saved game for the current user by the saved game's ID
-            SavedGame savedGame = await savedGamesDAO.GetSavedGameById(id);
-            if (savedGame == null)
-            {
-                return RedirectToAction("StartGame"); // If the saved game is not found, redirect to StartGame.
-            }
-
-            // Deserialize the saved game data (Board state)
-            Board board = JsonConvert.DeserializeObject<Board>(savedGame.GameData);
-
-            // Initialize the game engine with the deserialized board
-            GameEngine gameEngine = new GameEngine(board, savedGame.TimePlayed); // Pass the deserialized board
-
-            // Create a new GameViewModel to hold the game state
-            GameViewModel viewModel = new GameViewModel(gameEngine);
+            GameViewModel viewModel = await _savedGamesService.LoadGame(userId, id);
 
             // Store the current game in memory for the user
             CurrentGames[userId] = viewModel;
