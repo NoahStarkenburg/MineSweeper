@@ -1,5 +1,8 @@
+using MineSweeper.BusinessLogic;
+using MineSweeper.BusinessLogic.LogicInterfaces;
 using MineSweeper.Models;
 using MineSweeper.Models.DAOs;
+using MineSweeper.Models.DAOs.InterfacesDAOs;
 
 namespace MineSweeper
 {
@@ -13,6 +16,8 @@ namespace MineSweeper
             builder.Services.AddControllersWithViews();
 
             builder.Services.AddSingleton<IUserManager, UserDAO>();
+            builder.Services.AddSingleton<ISavedGamesDAO, SavedGamesDAO>();
+            builder.Services.AddSingleton<ISavedGamesService, SavedGamesService>();
             builder.Services.AddSingleton<SavedGamesDAO>();
 
             builder.Services.AddSession(options =>

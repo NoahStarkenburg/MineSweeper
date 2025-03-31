@@ -2,7 +2,7 @@
 
 namespace MineSweeper.Models.DAOs
 {
-    public class SavedGamesDAO
+    public class SavedGamesDAO : ISavedGamesDAO
     {
         private readonly string _connectionString;
 
