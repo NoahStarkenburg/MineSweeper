@@ -63,6 +63,37 @@ namespace MineSweeper.Models.DAOs
             return savedGames;
         }
 
+        public async Task<IEnumerable<SavedGame>> GetAllSavedGames()
+        {
+            List<SavedGame> savedGames = new List<SavedGame>();
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                string query = @"SELECT * FROM savedgames";
+
+                await connection.OpenAsync();
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    using (MySqlDataReader reader = (MySqlDataReader)await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            SavedGame savedGame = new SavedGame
+                            {
+                                Id = reader.IsDBNull(0) ? 0 : reader.GetInt32(0),
+                                UserId = reader.IsDBNull(1) ? 0 : reader.GetInt32(1),
+                                DateSaved = reader.IsDBNull(2) ? DateTime.MinValue : reader.GetDateTime(2),
+                                GameData = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                                TimePlayed = reader.IsDBNull(4) ? 0 : reader.GetInt32(4)
+                            };
+                            savedGames.Add(savedGame);
+                        }
+                    }
+                }
+            }
+            return savedGames;
+        }
+
         public async Task<SavedGame?> GetSavedGameById(int id)
         {
             using (MySqlConnection con = new MySqlConnection(_connectionString))

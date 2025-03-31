@@ -35,6 +35,13 @@ namespace MineSweeper.Controllers
             return Ok(savedGame);
         }
 
+        [HttpGet("/api/showSavedGames")]
+        public async Task<ActionResult<IEnumerable<SavedGame>>> ShowAllSavedGames()
+        {
+            var savedGames = await _savedGamesDAO.GetAllSavedGames();
+            return Ok(savedGames);
+        }
+
         // DELETE: localhost/api/deleteOneGame/5
         [HttpDelete("/api/deleteOneGame/{id}")]
         public async Task<IActionResult> DeleteSavedGame(int id)

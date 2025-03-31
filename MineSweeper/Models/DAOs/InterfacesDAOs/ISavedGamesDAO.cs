@@ -7,5 +7,6 @@
         public Task<SavedGame?> GetSavedGameById(int id);
         public Task<int> DeleteSavedGame(int id);
         public Task UpdateSavedGame(SavedGame savedGame);
+        public Task<IEnumerable<SavedGame>> GetAllSavedGames();
     }
 }
