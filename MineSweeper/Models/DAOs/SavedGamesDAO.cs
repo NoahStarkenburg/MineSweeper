@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using MineSweeper.Models.DAOs.InterfacesDAOs;
+using MySql.Data.MySqlClient;
 
 namespace MineSweeper.Models.DAOs
 {
