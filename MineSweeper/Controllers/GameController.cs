@@ -223,11 +223,12 @@ namespace MineSweeper.Controllers
         public async Task<IActionResult> SaveGame()
         {
             string userId = GetUserById();
+            List<SavedGame> savedGames = (List<SavedGame>)await _savedGamesService.GetAllGamesById(userId);
             if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
             {
                 await _savedGamesService.SaveGame(userId, viewModel);
             }
-            return View("StartGame");
+            return View("SavedGames", savedGames);
         }
 
         

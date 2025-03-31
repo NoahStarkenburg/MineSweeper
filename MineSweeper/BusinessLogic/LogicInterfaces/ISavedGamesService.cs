@@ -7,5 +7,6 @@ namespace MineSweeper.BusinessLogic.LogicInterfaces
     {
         public Task SaveGame(string userId, GameViewModel gameViewModel);
         public Task<GameViewModel?> LoadGame(string userId, int savedGameId);
+        public Task<IEnumerable<SavedGame>> GetAllGamesById(string userId);
     }
 }

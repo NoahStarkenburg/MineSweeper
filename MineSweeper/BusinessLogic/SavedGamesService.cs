@@ -52,5 +52,10 @@ namespace MineSweeper.BusinessLogic
             await _savedGamesDAO.AddSaveGame(savedGame);
             
         }
+
+        public async Task<IEnumerable<SavedGame>> GetAllGamesById(string userId)
+        {
+            return await _savedGamesDAO.GetAllSavedGamesByUserId(userId);
+        }
     }
 }
