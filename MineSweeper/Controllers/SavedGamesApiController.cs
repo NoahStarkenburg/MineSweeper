@@ -16,7 +16,7 @@ namespace MineSweeper.Controllers
         }
 
         // GET: localhost/api/showSavedGames
-        [HttpGet("/api/showSavedGames/{userId}")]
+        [HttpGet("/api/showSavedGamesByUserId/{userId}")]
         public async Task<ActionResult<IEnumerable<SavedGame>>> ShowAllSavedGames(string userId)
         {
             var savedGames = await _savedGamesDAO.GetAllSavedGamesByUserId(userId);
