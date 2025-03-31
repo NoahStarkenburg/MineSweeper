@@ -4,8 +4,8 @@ namespace MineSweeper.Models.Game_Models
 {
     public class GameDAO : IGameManager
     {
-        //string connectionString = "server=localhost;port=3306;user=root;password=root;database=minesweeper;";
-        string connectionString = "server=localhost;port=8889;user=root;password=root;database=minesweeper;";
+        string connectionString = "server=localhost;port=3306;user=root;password=root;database=minesweeper;";
+        //string connectionString = "server=localhost;port=8889;user=root;password=root;database=minesweeper;";
 
         public int AddScore(ScoresModel score)
         {
