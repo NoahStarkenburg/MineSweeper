@@ -3,6 +3,9 @@ using MineSweeper.BusinessLogic.LogicInterfaces;
 using MineSweeper.Models;
 using MineSweeper.Models.DAOs;
 using MineSweeper.Models.DAOs.InterfacesDAOs;
+using MineSweeper.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace MineSweeper
 {
@@ -14,6 +17,10 @@ namespace MineSweeper
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            // Add DbContext
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddSingleton<IUserManager, UserDAO>();
             builder.Services.AddSingleton<ISavedGamesDAO, SavedGamesDAO>();
@@ -27,6 +34,7 @@ namespace MineSweeper
                 options.Cookie.IsEssential = true;
             });
             builder.Services.AddDistributedMemoryCache();
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -37,14 +45,16 @@ namespace MineSweeper
                 app.UseHsts();
             }
 
-            app.UseSession();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
 
             app.UseAuthorization();
+
+            app.UseSession();
             app.MapControllers();
+
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");

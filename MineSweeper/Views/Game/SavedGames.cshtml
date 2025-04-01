@@ -1,47 +1,55 @@
 ﻿@model IEnumerable<MineSweeper.Models.SavedGame>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Id)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UserId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DateSaved)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TimePlayed)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UserId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateSaved.Date)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TimePlayed) seconds
-            </td>
-            <td>
-                    @Html.ActionLink("Load Game", "LoadGame", "Game", new { id = item.Id}, null)
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Your Saved Games</h2>
+        <a asp-controller="Game" asp-action="StartGame" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create New Game
+        </a>
+    </div>
 
-                
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="text-muted">No Saved Games</h3>
+                    <p class="lead">You haven't saved any games yet.</p>
+                    <a asp-controller="Game" asp-action="StartGame" class="btn btn-primary">Start a New Game</a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var item in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="card-title">Game #@item.Id</h5>
+                                <span class="badge bg-primary">@item.TimePlayed seconds</span>
+                            </div>
+                            <div class="card-text">
+                                <p class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="far fa-calendar"></i> Saved on @item.DateSaved.Date.ToString("MMM dd, yyyy")
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <div class="d-grid">
+                                <a href="@Url.Action("LoadGame", "Game", new { id = item.Id})" class="btn btn-outline-primary">
+                                    <i class="fas fa-gamepad"></i> Load Game
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

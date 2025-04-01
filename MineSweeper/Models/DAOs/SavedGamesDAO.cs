@@ -9,7 +9,7 @@ namespace MineSweeper.Models.DAOs
 
         public SavedGamesDAO(IConfiguration configuration)
         {
-            _connectionString = configuration["SQLConnection:DefaultConnection"];
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
         public async Task AddSaveGame(SavedGame savedGame)

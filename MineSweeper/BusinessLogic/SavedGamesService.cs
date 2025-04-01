@@ -31,6 +31,7 @@ namespace MineSweeper.BusinessLogic
 
             // Initialize the game engine with the deserialized board
             GameEngine gameEngine = new GameEngine(board, savedGame.TimePlayed); // Pass the deserialized board
+            gameEngine.SavedGameId = savedGameId; // Set the SavedGameId
 
             // Create a new GameViewModel to hold the game state
             GameViewModel viewModel = new GameViewModel(gameEngine);
@@ -40,22 +41,41 @@ namespace MineSweeper.BusinessLogic
 
         public async Task SaveGame(string userId, GameViewModel gameViewModel)
         {
-            SavedGame savedGame = new SavedGame();
-  
-            string json = JsonConvert.SerializeObject(gameViewModel.Game.GetBoardState(), Formatting.Indented);
+            // Get all saved games for the user
+            var existingGames = await _savedGamesDAO.GetAllSavedGamesByUserId(userId);
+            
+            // Check if a game with the same board state already exists
+            string currentGameJson = JsonConvert.SerializeObject(gameViewModel.Game.GetBoardState(), Formatting.Indented);
+            foreach (var existingGame in existingGames)
+            {
+                if (existingGame.GameData == currentGameJson)
+                {
+                    // If a duplicate is found, update the existing game instead of creating a new one
+                    existingGame.DateSaved = DateTime.Now;
+                    existingGame.TimePlayed = (int)gameViewModel.Game.GetElapsedTime().TotalSeconds;
+                    await _savedGamesDAO.UpdateSavedGame(existingGame);
+                    return;
+                }
+            }
 
+            // If no duplicate found, create a new saved game
+            SavedGame savedGame = new SavedGame();
             savedGame.UserId = Convert.ToInt32(userId);
             savedGame.DateSaved = DateTime.Now;
-            savedGame.GameData = json;
+            savedGame.GameData = currentGameJson;
             savedGame.TimePlayed = (int)gameViewModel.Game.GetElapsedTime().TotalSeconds;
 
             await _savedGamesDAO.AddSaveGame(savedGame);
-            
         }
 
         public async Task<IEnumerable<SavedGame>> GetAllGamesById(string userId)
         {
             return await _savedGamesDAO.GetAllSavedGamesByUserId(userId);
+        }
+
+        public async Task DeleteSavedGame(int id)
+        {
+            await _savedGamesDAO.DeleteSavedGame(id);
         }
     }
 }

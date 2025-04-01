@@ -1,17 +1,21 @@
 ﻿using MySql.Data.MySqlClient;
 using System.Data;
+using Microsoft.Extensions.Configuration;
 
 namespace MineSweeper.Models.DAOs
 {
     public class UserDAO : IUserManager
     {
-        //Connection strings
-        string connectionString = "server=localhost;port=3306;user=root;password=root;database=minesweeper;";
-        //string connectionString = "server=localhost;port=8889;user=root;password=root;database=minesweeper;";
+        private readonly string _connectionString;
+
+        public UserDAO(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
 
         public int AddUser(UserModel user)
         {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 connection.Open();
                 string query = @"INSERT INTO `users`(`FirstName`, `LastName`, `Sex`, `DateOfBirth`, `State`, `Email`, `Username`, `Password`, `Salt`) 
@@ -37,7 +41,7 @@ namespace MineSweeper.Models.DAOs
 
         public int CheckCredentials(string username, string password)
         {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 connection.Open();
                 string query = "SELECT * FROM users WHERE Username = @Username";
@@ -65,7 +69,7 @@ namespace MineSweeper.Models.DAOs
 
         public void DeleteUser(UserModel user)
         {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 connection.Open();
                 string query = "DELETE FROM users where Id = @Id";
@@ -78,7 +82,7 @@ namespace MineSweeper.Models.DAOs
         public List<UserModel> GetAllUsers()
         {
             List<UserModel> users = new List<UserModel>();
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 connection.Open();
                 string query = "SELECT * FROM users";
@@ -107,7 +111,7 @@ namespace MineSweeper.Models.DAOs
 
         public UserModel getUserById(int id)
         {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 connection.Open();
                 string query = "SELECT * FROM users WHERE Id = @Id";
@@ -137,7 +141,7 @@ namespace MineSweeper.Models.DAOs
 
         public UserModel getUserByName(string username)
         {
-            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 connection.Open();
                 string query = "SELECT * FROM users WHERE Username = @Username";
@@ -169,7 +173,7 @@ namespace MineSweeper.Models.DAOs
         {
             if (user != null)
             {
-                using (MySqlConnection connection = new MySqlConnection(connectionString))
+                using (MySqlConnection connection = new MySqlConnection(_connectionString))
                 {
                     connection.Open();
                     string query = @"
