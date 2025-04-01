@@ -13,6 +13,13 @@ namespace MineSweeper.Controllers
 
         public IActionResult Index()
         {
+            // Check if user is already logged in
+            var userJson = HttpContext.Session.GetString("User");
+            if (!string.IsNullOrEmpty(userJson))
+            {
+                var currentUser = ServiceStack.Text.JsonSerializer.DeserializeFromString<UserModel>(userJson);
+                return View("LoginSuccess", currentUser);
+            }
             return View();
         }
 
@@ -23,6 +30,14 @@ namespace MineSweeper.Controllers
 
         public IActionResult ProccessLogin(string username, string password)
         {
+            // Check if user is already logged in
+            var existingUserJson = HttpContext.Session.GetString("User");
+            if (!string.IsNullOrEmpty(existingUserJson))
+            {
+                var currentUser = ServiceStack.Text.JsonSerializer.DeserializeFromString<UserModel>(existingUserJson);
+                return View("LoginSuccess", currentUser);
+            }
+
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
                 return View("LoginFailure", new UserModel { Username = username });
@@ -43,14 +58,28 @@ namespace MineSweeper.Controllers
             }
         }
 
-
         public IActionResult Register()
         {
+            // Check if user is already logged in
+            var userJson = HttpContext.Session.GetString("User");
+            if (!string.IsNullOrEmpty(userJson))
+            {
+                var currentUser = ServiceStack.Text.JsonSerializer.DeserializeFromString<UserModel>(userJson);
+                return View("LoginSuccess", currentUser);
+            }
             return View(new RegisterViewModel());
         }
 
         public IActionResult ProcessRegister(RegisterViewModel registerViewModel)
         {
+            // Check if user is already logged in
+            var userJson = HttpContext.Session.GetString("User");
+            if (!string.IsNullOrEmpty(userJson))
+            {
+                var currentUser = ServiceStack.Text.JsonSerializer.DeserializeFromString<UserModel>(userJson);
+                return View("LoginSuccess", currentUser);
+            }
+
             UserModel user = new UserModel
             {
                 FirstName = registerViewModel.FirstName,
@@ -67,12 +96,11 @@ namespace MineSweeper.Controllers
             return View("Index");
         }
 
-
         [SessionCheckFilter]
         public IActionResult Logout()
         {
             HttpContext.Session.Remove("User");
-            return View("Index");
+            return RedirectToAction("Index");
         }
     }
 }

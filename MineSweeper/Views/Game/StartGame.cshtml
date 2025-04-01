@@ -2,21 +2,142 @@
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @{
-    <h2>Start a New Minesweeper Game</h2>
-
-    <form asp-action="StartGame" method="post">
-        <label for="rows">Rows: <span id="rowValue">5 </span></label>
-        <input type="range" id="rows" name="rows" min="3" max="10" value="5" oninput="rowValue.innerText = rows.value">
-        <br />
-
-        <label for="columns">Columns: <span id="columnValue">5</span></label>
-        <input type="range" id="columns" name="columns" min="3" max="10" value="5" oninput="columnValue.innerText = columns.value">
-        <br />
-
-        <label for="difficulty">Difficulty: <span id="difficultyValue">1 </span></label>
-        <input type="range" id="difficulty" name="difficulty" min="1" max="3" value="2" oninput="difficultyValue.innerText = difficulty.value">
-        <br />
-
-        <button type="submit">Start Game</button>
-    </form>
+    ViewData["Title"] = "Start New Game";
 }
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0 text-center">Start a New Minesweeper Game</h2>
+                </div>
+                <div class="card-body">
+                    <form asp-action="StartGame" method="post">
+                        <!-- Board Size Section -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Board Size</h4>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="rows" class="form-label">Rows: <span id="rowValue" class="badge bg-secondary">5</span></label>
+                                    <input type="range" class="form-range" id="rows" name="rows" min="3" max="10" value="5" 
+                                           oninput="rowValue.innerText = rows.value">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">3</small>
+                                        <small class="text-muted">10</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="columns" class="form-label">Columns: <span id="columnValue" class="badge bg-secondary">5</span></label>
+                                    <input type="range" class="form-range" id="columns" name="columns" min="3" max="10" value="5" 
+                                           oninput="columnValue.innerText = columns.value">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">3</small>
+                                        <small class="text-muted">10</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Difficulty Section -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Difficulty Level</h4>
+                            <div class="mb-3">
+                                <label for="difficulty" class="form-label">Difficulty: <span id="difficultyValue" class="badge bg-secondary">Medium</span></label>
+                                <input type="range" class="form-range" id="difficulty" name="difficulty" min="1" max="3" value="2" 
+                                       oninput="updateDifficultyValue()">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">Easy</small>
+                                    <small class="text-muted">Medium</small>
+                                    <small class="text-muted">Hard</small>
+                                </div>
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Difficulty affects the number of mines and special cells:
+                                <ul class="mb-0">
+                                    <li>Easy: 10% mines, 3 special cells</li>
+                                    <li>Medium: 8% mines, 2 special cells</li>
+                                    <li>Hard: 5% mines, 1 special cell</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-play"></i> Start Game
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateDifficultyValue() {
+            const difficulty = document.getElementById('difficulty').value;
+            const difficultyValue = document.getElementById('difficultyValue');
+            switch(difficulty) {
+                case '1':
+                    difficultyValue.innerText = 'Easy';
+                    difficultyValue.className = 'badge bg-success';
+                    break;
+                case '2':
+                    difficultyValue.innerText = 'Medium';
+                    difficultyValue.className = 'badge bg-warning';
+                    break;
+                case '3':
+                    difficultyValue.innerText = 'Hard';
+                    difficultyValue.className = 'badge bg-danger';
+                    break;
+            }
+        }
+
+        // Initialize difficulty on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDifficultyValue();
+        });
+    </script>
+}
+
+<style>
+    .form-range::-webkit-slider-thumb {
+        background: #0d6efd;
+    }
+    
+    .form-range::-moz-range-thumb {
+        background: #0d6efd;
+    }
+    
+    .form-range::-ms-thumb {
+        background: #0d6efd;
+    }
+    
+    .badge {
+        font-size: 0.9em;
+        padding: 0.5em 0.8em;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    
+    .card-header {
+        border-radius: 15px 15px 0 0 !important;
+    }
+    
+    .btn-primary {
+        padding: 0.8em 2em;
+        border-radius: 30px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+    }
+</style>

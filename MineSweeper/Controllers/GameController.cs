@@ -58,7 +58,6 @@ namespace MineSweeper.Controllers
         [SessionCheckFilter]
         public IActionResult StartGame()
         {
-
             return View();
         }
 
@@ -69,7 +68,7 @@ namespace MineSweeper.Controllers
         /// <param name="col"></param>
         /// <returns></returns>
         [HttpPost]
-        public IActionResult PlayMove(int row, int col)
+        public async Task<IActionResult> PlayMove(int row, int col)
         {
             string userId = GetUserById();
 
@@ -80,6 +79,11 @@ namespace MineSweeper.Controllers
                 if (viewModel.Game.IsGameWin())
                 {
                     int finalScore = viewModel.Game.GenerateScore();
+                    // Delete the saved game if it exists
+                    if (viewModel.Game.SavedGameId.HasValue)
+                    {
+                        await _savedGamesService.DeleteSavedGame(viewModel.Game.SavedGameId.Value);
+                    }
                     CurrentGames.Remove(userId); // End the game
                     return RedirectToAction("WinPage", new { score = finalScore });
                 }
@@ -93,6 +97,11 @@ namespace MineSweeper.Controllers
 
                 if (!continueGame && !viewModel.Game.IsGameWin())
                 {
+                    // Delete the saved game if it exists
+                    if (viewModel.Game.SavedGameId.HasValue)
+                    {
+                        await _savedGamesService.DeleteSavedGame(viewModel.Game.SavedGameId.Value);
+                    }
                     CurrentGames.Remove(userId);
                     return View("LosePage");
                 }
@@ -102,7 +111,7 @@ namespace MineSweeper.Controllers
         }
 
         [HttpPost]
-        public IActionResult PlayMovePartial(int row, int col)
+        public async Task<IActionResult> PlayMovePartial(int row, int col)
         {
             string userId = GetUserById();
             if (CurrentGames.TryGetValue(userId, out GameViewModel viewModel))
@@ -112,14 +121,24 @@ namespace MineSweeper.Controllers
                 if (viewModel.Game.IsGameWin())
                 {
                     int finalScore = viewModel.Game.GenerateScore();
+                    // Delete the saved game if it exists
+                    if (viewModel.Game.SavedGameId.HasValue)
+                    {
+                        await _savedGamesService.DeleteSavedGame(viewModel.Game.SavedGameId.Value);
+                    }
                     CurrentGames.Remove(userId);
-                    return RedirectToAction("WinPage", new { score = finalScore });
+                    return Json(new { gameWon = true, redirectUrl = Url.Action("WinPage", new { score = finalScore }) });
                 }
                 if (!continueGame && !viewModel.Game.IsGameWin())
                 {
                     // When a bomb is clicked, the game ends (loss)
+                    // Delete the saved game if it exists
+                    if (viewModel.Game.SavedGameId.HasValue)
+                    {
+                        await _savedGamesService.DeleteSavedGame(viewModel.Game.SavedGameId.Value);
+                    }
                     CurrentGames.Remove(userId);
-                    return View("LosePage");
+                    return Json(new { gameLost = true, redirectUrl = Url.Action("LosePage") });
                 }
 
                 // Update the board state in the current game
@@ -130,12 +149,8 @@ namespace MineSweeper.Controllers
             return BadRequest();
         }
 
-
-
-
-
         [HttpPost]
-        public IActionResult PartialCellUpdate(int row, int col)
+        public async Task<IActionResult> PartialCellUpdate(int row, int col)
         {
             // Get user id
             string userId = GetUserById();
@@ -149,6 +164,11 @@ namespace MineSweeper.Controllers
                 if (viewModel.Game.IsGameWin())
                 {
                     int finalScore = viewModel.Game.GenerateScore();
+                    // Delete the saved game if it exists
+                    if (viewModel.Game.SavedGameId.HasValue)
+                    {
+                        await _savedGamesService.DeleteSavedGame(viewModel.Game.SavedGameId.Value);
+                    }
                     CurrentGames.Remove(userId); // End the game
                     return RedirectToAction("WinPage", new { score = finalScore });
                 }
@@ -161,6 +181,11 @@ namespace MineSweeper.Controllers
 
                 if (!continueGame && !viewModel.Game.IsGameWin())
                 {
+                    // Delete the saved game if it exists
+                    if (viewModel.Game.SavedGameId.HasValue)
+                    {
+                        await _savedGamesService.DeleteSavedGame(viewModel.Game.SavedGameId.Value);
+                    }
                     CurrentGames.Remove(userId);
                     return View("LosePage");
                 }
@@ -170,17 +195,19 @@ namespace MineSweeper.Controllers
             return PartialView("_Cell");
         }
 
-
-
         public IActionResult WinPage(int score)
         {
             ViewBag.Score = score; // Store the score in ViewBag
             return View();
         }
 
+        public IActionResult LosePage()
+        {
+            return View();
+        }
 
         [HttpPost]
-        public IActionResult FlagCell(int Row, int Col)
+        public async Task<IActionResult> FlagCell(int Row, int Col)
         {
             string userId = GetUserById();
 
@@ -188,9 +215,14 @@ namespace MineSweeper.Controllers
             {
                 viewModel.Game.UpdateGame(Row, Col, 2); // 2 = flag action
 
-                if (viewModel.Game.AllBombsFlagged()) // Check if game is won
+                if (viewModel.Game.IsGameWin()) // Check if game is won using the proper win condition
                 {
                     int finalScore = viewModel.Game.GenerateScore();
+                    // Delete the saved game if it exists
+                    if (viewModel.Game.SavedGameId.HasValue)
+                    {
+                        await _savedGamesService.DeleteSavedGame(viewModel.Game.SavedGameId.Value);
+                    }
                     CurrentGames.Remove(userId); // End game
                     return Json(new { gameWon = true, redirectUrl = Url.Action("WinPage", new { score = finalScore }) });
                 }
@@ -203,9 +235,6 @@ namespace MineSweeper.Controllers
 
             return BadRequest();
         }
-
-
-
 
         [HttpGet]
         public int GetElapsedTime()
@@ -250,17 +279,15 @@ namespace MineSweeper.Controllers
             return View("MinesweeperGame", viewModel);
         }
 
-        // Should be moved to DAO service class
         private string GetUserById()
         {
             string userJson = HttpContext.Session.GetString("User");
-
-            // Deserialize using Newtonsoft.Json
-            UserModel user = JsonConvert.DeserializeObject<UserModel>(userJson);
-
-            return user?.Id.ToString();  // Safely return the UserId if user is not null
+            if (!string.IsNullOrEmpty(userJson))
+            {
+                UserModel user = ServiceStack.Text.JsonSerializer.DeserializeFromString<UserModel>(userJson);
+                return user.Id.ToString();
+            }
+            return string.Empty;
         }
-
-
     }
 }

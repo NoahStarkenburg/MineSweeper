@@ -1,50 +1,163 @@
 ﻿@model MineSweeper.Models.GameViewModel
 
-<div id="timestamp" style="font-weight: bold; margin-bottom: 10px;">
-    Elapsed Time: 0 seconds
+<div class="game-container py-4">
+    <!-- Game Header -->
+    <div class="game-header mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="game-title mb-0">
+                <i class="fas fa-bomb text-danger me-2"></i>Minesweeper
+            </h2>
+            <div class="d-flex align-items-center gap-3">
+                <div class="game-stats">
+                    <div id="timestamp" class="text-light">
+                        <i class="fas fa-clock me-2"></i>Time: <span class="time-value">0</span>s
+                    </div>
+                </div>
+                <form asp-action="SaveGame" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Game
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Responsive Game Board Container -->
+    <div id="game-board-container">
+        @Html.Partial("_GameBoard", Model)
+    </div>
 </div>
 
-<div id="game-board-container" class="container">
-    @Html.Partial("_GameBoard", Model)
-</div>
+<style>
+    .game-container {
+        background: linear-gradient(145deg, #1E1E1E, #2C2C2C);
+        min-height: 100vh;
+        padding: 2rem;
+    }
+
+    .game-header {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1rem 2rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .game-title {
+        color: #fff;
+        font-size: 1.8rem;
+        font-weight: 600;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .game-stats {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-size: 1.1rem;
+    }
+
+    .time-value {
+        font-weight: bold;
+        color: #4caf50;
+    }
+
+    .btn-primary {
+        background: #4caf50;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+        }
+
+    #game-board-container {
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto;
+        overflow-x: auto;
+        padding: 1rem;
+    }
+
+    #game-board {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .cell {
+        padding: 2px;
+        border: 1px solid black;
+        aspect-ratio: 1;
+        width: 100%;
+        height: auto;
+        box-sizing: border-box;
+    }
+
+    .cell form {
+        width: 100%;
+        height: 100%;
+    }
+
+    .cell button {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        border: none;
+        background: none;
+        display: block;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .cell button:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .cell img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+</style>
 
 @section Scripts {
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-    <!-- Timer stays outside the container -->
     <script>
         function updateElapsedTime() {
             $.ajax({
                 url: '/Game/GetElapsedTime',
                 type: 'GET',
                 success: function (data) {
-                    $('#timestamp').text(`Elapsed Time: ${data} seconds`);
+                    $('.time-value').text(data);
                 }
             });
         }
         setInterval(updateElapsedTime, 1000);
     </script>
 
-    <!-- Intercept left-click form submission (for revealing cells) -->
     <script>
         $(document).on("submit", ".play-move-form", function (e) {
             e.preventDefault();
             var form = $(this);
             $.post(form.attr("action"), form.serialize(), function (data) {
-                if (data.gameWon) {
-                    window.location.href = data.redirectUrl;
-                } else if (data.gameLost) {
+                if (data.gameWon || data.gameLost) {
                     window.location.href = data.redirectUrl;
                 } else {
-                    // Update the entire board container with the returned partial view
                     $("#game-board-container").html(data);
                 }
             });
         });
-    </script>
 
-    <!-- Right-click handler (for flagging a cell) can still update just that cell -->
-    <script>
         $(document).on("contextmenu", ".cell", function (event) {
             event.preventDefault();
             var row = $(this).data("row");
@@ -54,8 +167,9 @@
                     if (data.gameWon) {
                         window.location.href = data.redirectUrl;
                     } else {
-                        // For flagging, you may choose to update only the cell
-                        $("#cell-" + row + "-" + col).replaceWith(data);
+                        var cell = $("#cell-" + row + "-" + col);
+                        cell.html($(data).html());
+                        cell.attr('class', $(data).attr('class'));
                     }
                 })
                 .fail(function () {

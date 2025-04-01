@@ -1,9 +1,7 @@
 ﻿using MineSweeper.Models;
 using MineSweeper.Models.Game_Models;
-using MySqlX.XDevAPI;
 using System.Drawing;
 using System.Text.Json.Serialization;
-
 
 namespace MineSweeper.BusinessLogic.Game_Logic
 {
@@ -25,17 +23,16 @@ namespace MineSweeper.BusinessLogic.Game_Logic
         private int totalNumBombs { get; set; }
         private bool hasSpecial { get; set; }
         private bool hasHitBomb { get; set; }
+        private bool isFirstClick { get; set; } = true;
 
         public int FinalScore { get; set; }
+        public int? SavedGameId { get; set; }
 
         private DateTime startTime { get; set; }
-
-
 
         //-----------------------------------------------------------------------------
         // END OF VALUES AND PROPERTIES
         //-----------------------------------------------------------------------------
-
 
         //-----------------------------------------------------------------------------
         // START OF CONSTRUCTORS
@@ -53,6 +50,7 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             this.disboard = existingBoard; // Use the existing board instead of initializing a new one
             this.difficulty = existingBoard.difficulty; // Make sure difficulty is correctly set
             this.startTime = DateTime.UtcNow - TimeSpan.FromSeconds(timePlayed);
+            this.isFirstClick = false; // For loaded games, it's not the first click
 
             this.totalNumBombs = 0;
             foreach (var cell in disboard.Cells)
@@ -74,22 +72,10 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             this.difficulty = difficulty;
             if (startTime == default)
                 startTime = DateTime.UtcNow;
-
-
-            // This method is depricated due to violaiton of seperatration of concerns
-            // This will start and run the game from here on out.
-            // Start();
-            // Creating the board and validating that there is at least 1 bomb in the game
-            while (totalNumBombs == 0)
-                this.InitBoard();
-
-
         }
 
         //-----------------------------------------------------------------------------
         // END OF CONSTRUCTORS
-        //-----------------------------------------------------------------------------
-
         //-----------------------------------------------------------------------------
 
         //-----------------------------------------------------------------------------
@@ -142,18 +128,15 @@ namespace MineSweeper.BusinessLogic.Game_Logic
         //-----------------------------------------------------------------------------
 
         //-----------------------------------------------------------------------------
-
-        //-----------------------------------------------------------------------------
         // START OF METHODS
         //-----------------------------------------------------------------------------
-
 
         /// <summary>
         /// Will set up the board based off the difficulty level.
         /// The difficulty will determine how many bombs will be distributed and how many specials.
         /// </summary>
         /// <param name="difficulty">difficulty: int - How many bombs and specials will be distributed based off this number.</param>
-        private void InitBoard()
+        private void InitBoard(int firstClickRow, int firstClickCol)
         {
             // Method Vars
             Random rand = new Random();
@@ -162,8 +145,18 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             int percentageChanceOfSpawn = difficulty;
             int numOfSpecials = 0;
 
-            // Milestone II. Make the bombs based off difficulty.
+            // Reset the board
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < columns; c++)
+                {
+                    disboard.Cells[r, c].IsBomb = false;
+                    disboard.Cells[r, c].IsSpecial = false;
+                    disboard.Cells[r, c].NumBombNeighbors = 0;
+                }
+            }
 
+            // Set difficulty values
             switch (difficulty)
             {
                 case 1:
@@ -180,19 +173,36 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                     break;
             }
 
+            // Create safe zone around first click
+            List<Point> safeZone = new List<Point>();
+            for (int r = -1; r <= 1; r++)
+            {
+                for (int c = -1; c <= 1; c++)
+                {
+                    int newRow = firstClickRow + r;
+                    int newCol = firstClickCol + c;
+                    if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < columns)
+                    {
+                        safeZone.Add(new Point(newRow, newCol));
+                    }
+                }
+            }
+
             // Setting up the bombs
             for (int r = 0; r < rows; r++)
             {
                 for (int c = 0; c < columns; c++)
                 {
+                    // Skip safe zone
+                    if (safeZone.Any(p => p.X == r && p.Y == c))
+                        continue;
+
                     if (rand.Next(percentageChanceOfSpawn) < 1)
                     {
-                        // Labeling the cell as a bomb
                         disboard.Cells[r, c].IsBomb = true;
                         totalNumBombs++;
 
-
-                        // Goes through each row that is in the 3x3 of the cell that is a bomb and adds 1 to the numBombNeighbor 
+                        // Update neighbor counts
                         for (int innerRow = -1; innerRow <= 1; innerRow++)
                         {
                             for (int innerColumn = -1; innerColumn <= 1; innerColumn++)
@@ -203,7 +213,6 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                                 int neighboringRow = r + innerRow;
                                 int neighboringCol = c + innerColumn;
 
-                                // Checks to see if it is out of bounds
                                 if (neighboringRow >= 0 && neighboringRow < rows && neighboringCol >= 0 && neighboringCol < columns)
                                     disboard.Cells[neighboringRow, neighboringCol].NumBombNeighbors++;
                             }
@@ -212,31 +221,52 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                 }
             }
 
-            // Thowing specials in
+            // Ensure at least one bomb exists
+            if (totalNumBombs == 0)
+            {
+                // Place one bomb outside safe zone
+                List<Point> availableCells = new List<Point>();
+                for (int r = 0; r < rows; r++)
+                {
+                    for (int c = 0; c < columns; c++)
+                    {
+                        if (!safeZone.Any(p => p.X == r && p.Y == c))
+                        {
+                            availableCells.Add(new Point(r, c));
+                        }
+                    }
+                }
+                if (availableCells.Count > 0)
+                {
+                    Point bombPoint = availableCells[rand.Next(availableCells.Count)];
+                    disboard.Cells[bombPoint.X, bombPoint.Y].IsBomb = true;
+                    totalNumBombs = 1;
+                }
+            }
+
+            // Place specials
             List<Point> blankLocations = new List<Point>();
             for (int row = 0; row < rows; row++)
             {
                 for (int col = 0; col < columns; col++)
                 {
-                    // Checking to see if the cell is blank and will add to list.
                     if (!disboard.Cells[row, col].IsBomb && disboard.Cells[row, col].NumBombNeighbors == 0)
                         blankLocations.Add(new Point(row, col));
                 }
             }
 
             // Adding Specials to one of the blank cells randomly
-            Point point;
-            for (int iterator = 0; iterator < numOfSpecials; iterator++)
+            for (int iterator = 0; iterator < numOfSpecials && blankLocations.Count > 0; iterator++)
             {
-                point = blankLocations.ElementAt(rand.Next(blankLocations.Count));
+                int randomIndex = rand.Next(blankLocations.Count);
+                Point point = blankLocations[randomIndex];
                 disboard.Cells[point.X, point.Y].IsSpecial = true;
+                blankLocations.RemoveAt(randomIndex);
             }
-            Console.WriteLine($"Expected Specials: {numOfSpecials}, Placed Specials: {disboard.Cells.Cast<Cell>().Count(cell => cell.IsSpecial)}");
-
         }
 
         /// <summary>
-        /// WIll take action given the row and column of the game board.
+        /// Will take action given the row and column of the game board.
         /// </summary>
         /// <param name="selectedRow">row: int - The row on the disboard</param>
         /// <param name="selectedCol">col: int - The column on the disboard</param>
@@ -247,6 +277,13 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             // Has the cell already been visited
             if (disboard.Cells[selectedRow, selectedCol].IsVisited) return true;
 
+            // Initialize board on first click
+            if (isFirstClick && action == 1)
+            {
+                InitBoard(selectedRow, selectedCol);
+                isFirstClick = false;
+            }
+
             // if the player has a special only use it if there is a bomb
             if (action == 1 && disboard.Cells[selectedRow, selectedCol].IsBomb && hasSpecial)
                 action = 3;
@@ -254,9 +291,7 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             // Conducts an action based off the passed in action Integer.
             switch (action)
             {
-
                 case 1: // Visit the cell
-
                     // Visit the cell
                     //disboard.Cells[selectedRow, selectedCol].IsVisited = true;
 
@@ -280,7 +315,6 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                         disboard.Cells[selectedRow, selectedCol].IsVisited = true;
                     }
 
-
                     // If the cell is empty, we are going to recursivly clear the rest of the ajacent cells.
                     if (!disboard.Cells[selectedRow, selectedCol].IsBomb && disboard.Cells[selectedRow, selectedCol].NumBombNeighbors == 0 && !disboard.Cells[selectedRow, selectedCol].IsSpecial)
                         RecursiveClearing(selectedRow, selectedCol);
@@ -288,11 +322,9 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                 case 2: // Flag the cell
                     disboard.Cells[selectedRow, selectedCol].IsFlagged = !disboard.Cells[selectedRow, selectedCol].IsFlagged;
 
-
                     return AllBombsFlagged();
 
                 case 3: // Use special if there is one saved
-
                     // Using the special
                     hasSpecial = false;
 
@@ -318,7 +350,6 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                         disboard.Cells[selectedRow, selectedCol].IsVisited = true;
                     }
 
-
                     break;
             }
             return true;
@@ -337,7 +368,6 @@ namespace MineSweeper.BusinessLogic.Game_Logic
              * 3) is it numeric
              * 4) is it empty
              */
-
 
             // Checking for out of bounds
             if (row < 0 || row >= disboard.Cells.GetLength(0) || col < 0 || col >= disboard.Cells.GetLength(1))
@@ -364,10 +394,7 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                 RecursiveClearing(row + 1, col - 1);
                 RecursiveClearing(row + 1, col);
                 RecursiveClearing(row + 1, col + 1);
-
             }
-
-
         }
 
         /// <summary>
@@ -386,38 +413,17 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                 {
                     flaggedBombs++; // Correctly flagged bomb
                     Console.WriteLine("Correct flag");
-
                 }
-                
                 else if (!cell.IsBomb && cell.IsFlagged)
                 {
                     incorrectFlags++; // Incorrect flag
                     Console.WriteLine("InCorrect flag");
-
                 }
             }
 
             // Ensure that ALL bombs are flagged AND there are NO incorrect flags
             return (flaggedBombs == totalBombs) && (incorrectFlags == 0);
         }
-
-
-        //public bool IsGameOver()
-        //{
-        //    bool result = false;
-        //    int rows = disboard.Cells.GetLength(0);
-        //    int cols = disboard.Cells.GetLength(1);
-
-        //    // Iterating through all the cells.
-        //    for (int row = 0; row < rows; row++)
-        //        for (int col = 0; col < cols; col++)
-        //            // Validating if the current cell is a bomb and is flagged
-        //            if (disboard.Cells[row, col].IsBomb && disboard.Cells[row, col].IsVisited)
-        //                return result = true;
-        //            else if (!disboard.Cells[row, col].IsBomb && !disboard.Cells[row, col].IsVisited)
-        //                result = false;
-        //    return result;
-        //}
 
         public bool IsGameWin()
         {
@@ -426,7 +432,7 @@ namespace MineSweeper.BusinessLogic.Game_Logic
                 if (!cell.IsBomb && !cell.IsVisited)
                     return false;
             }
-            return true;    
+            return true;
         }
 
         public int GenerateScore()
@@ -439,7 +445,6 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             }
             
             return score;
-
         }
 
         public TimeSpan GetElapsedTime()
@@ -447,10 +452,8 @@ namespace MineSweeper.BusinessLogic.Game_Logic
             return DateTime.UtcNow - startTime; // Calculate time difference
         }
 
-
         //-----------------------------------------------------------------------------
         // END OF METHODS
         //-----------------------------------------------------------------------------
-
     }
 }

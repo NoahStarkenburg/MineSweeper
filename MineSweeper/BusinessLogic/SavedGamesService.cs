@@ -31,6 +31,7 @@ namespace MineSweeper.BusinessLogic
 
             // Initialize the game engine with the deserialized board
             GameEngine gameEngine = new GameEngine(board, savedGame.TimePlayed); // Pass the deserialized board
+            gameEngine.SavedGameId = savedGameId; // Set the SavedGameId
 
             // Create a new GameViewModel to hold the game state
             GameViewModel viewModel = new GameViewModel(gameEngine);
@@ -56,6 +57,11 @@ namespace MineSweeper.BusinessLogic
         public async Task<IEnumerable<SavedGame>> GetAllGamesById(string userId)
         {
             return await _savedGamesDAO.GetAllSavedGamesByUserId(userId);
+        }
+
+        public async Task DeleteSavedGame(int id)
+        {
+            await _savedGamesDAO.DeleteSavedGame(id);
         }
     }
 }

@@ -1,10 +1,8 @@
-﻿using Org.BouncyCastle.Asn1.Cms;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Schema;
 
 namespace MineSweeper.Models.Game_Models
 {
@@ -30,8 +28,9 @@ namespace MineSweeper.Models.Game_Models
             Score = score;
         }
 
-        public int CompareTo(ScoresModel other)
+        public int CompareTo(ScoresModel? other)
         {
+            if (other == null) return 1;
             return this.Score.CompareTo(other.Score);
         }
     }
